@@ -1119,6 +1119,7 @@ Every question raised during design is closed here. A decision is not reopenable
 | DEC-22 | Which OpenAPI version? | **3.1.x**, pinned deliberately. The live latest is 3.2.1 (R-META-13); tracking latest would let a spec minor change validation semantics under the contract suite | D-11, RISK-10 |
 | DEC-23 | Where does the design system live? | `teams/platform/ui`, owned by the Platform team, semver with a two-release deprecation window | §7.1 row 1 |
 | DEC-24 | Do we adopt CUE for the catalog? | **No.** CUE's unification of schema and instance is attractive (R-META-17, R-META-18), but zod gives static type inference into the generator at no extra tool, and JSON Schema remains the portable fallback (R-CFG-04). Revisit if a second consumer needs the catalog without a JS runtime | R-META-17 |
+| DEC-25 | Are bounded contexts integrated asynchronously (event streams, sagas, scheduled jobs)? | **No, in v3.0.0 and v3.1.0.** Synchronous request/response only; the aggregator composes at request time. Recorded as a decision rather than left implicit, because "no asynchronous integration" is a constraint someone will otherwise read past. **Revisit trigger:** a second bounded context exists *and* a declared requirement needs decoupling the aggregator from request latency. Until both hold, adding it is out of scope (ADR-0025) | §2.2 NG-01 |
 
 ---
 

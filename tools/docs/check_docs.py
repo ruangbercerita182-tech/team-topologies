@@ -684,6 +684,43 @@ def _refs_including_ranges(line: str) -> set[str]:
     return found
 
 
+def doc_10_duplicate_heading(c: Corpus) -> list[Finding]:
+    """No document may contain the same section twice.
+
+    A duplicated section is silent and expensive. Every edit lands on the first
+    copy, the rest keep the older text, and nothing reports the divergence:
+    adr/README.md carried nine copies of the requested-changes table, five of
+    them stale, across four different lengths. Every other check passed on it.
+
+    Headings are compared at level 2 and below. Level 1 is the document title
+    and a document may legitimately carry more than one file.
+    """
+    out: list[Finding] = []
+    for p in c.files:
+        seen: dict[str, int] = {}
+        in_fence = False
+        for i, line in enumerate(c.text[p].splitlines(), 1):
+            if re.match(r"^\s*(```|~~~)", line):
+                in_fence = not in_fence
+                continue
+            if in_fence:
+                continue
+            m = re.match(r"^(#{2,6})\s+(.*?)\s*#*\s*$", line)
+            if not m:
+                continue
+            key = f"{len(m.group(1))}:{slugify_heading(m.group(2))}"
+            if key in seen:
+                out.append(Finding(
+                    "DOC-10", "error", rel(c, p), i,
+                    f"section heading repeated; first seen at line {seen[key]}. "
+                    "Edits to a duplicated section land on the first copy only",
+                    m.group(2)[:100],
+                ))
+            else:
+                seen[key] = i
+    return out
+
+
 CHECKS = [
     ("DOC-01", doc_01_references),
     ("DOC-02/03", doc_02_03_links),
@@ -692,6 +729,7 @@ CHECKS = [
     ("DOC-06", doc_06_gap_closure),
     ("DOC-07", doc_07_gate_names),
     ("DOC-08", doc_08_artefact_index),
+    ("DOC-10", doc_10_duplicate_heading),
     ("DOC-90", doc_90_rejected_citation),
 ]
 
