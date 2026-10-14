@@ -1,8 +1,11 @@
-name: docs
+name: gates
 
-# The document set is the only artefact this repository produces so far
-# (PRD NG-07). These gates exist because a fact with no single owner goes
-# stale the moment the thing it describes changes. See docs/adr/0028.
+# Two gate families, deliberately in one workflow:
+#   * document coherence  -- a fact with no single owner goes stale the moment
+#     the thing it describes changes (ADR-0028)
+#   * pinned resolution   -- FR-21/D-11, T-108. Vacuously clean until manifests
+#     exist, and that is the point: the gate is standing before there is
+#     anything for it to catch.
 
 on:
   push:
@@ -30,7 +33,7 @@ jobs:
         with:
           python-version: '3.13'
 
-      - name: Documentation gates
+      - name: Documentation and pinning gates
         run: python3 tools/docs/run_all.py
 
       - name: Show what is on the baseline, so it cannot grow unnoticed

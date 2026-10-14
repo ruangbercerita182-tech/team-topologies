@@ -1,0 +1,12 @@
+{
+  "name": "x",
+  "version": "0.0.0",
+  "dependencies": {
+    "react": "19.0.0",
+    "@cms/ui": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "5.6.3",
+    "eslint": "^9.15.0"
+  }
+}
