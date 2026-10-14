@@ -1,11 +1,10 @@
-<!-- check:docs:allow DOC-90 derived from each record's References section; a record may name a rejected entry to forbid it -->
+<!-- check:docs:allow DOC-90 R-BND-11, R-SOLID-09 — derived from each record's References section, so a record may carry a rejected entry. R-BND-11 in ADR-0012 and ADR-0017 is withdrawn by ADR-0029; the records are frozen as written. -->
 
 # Architecture Decision Records
 
 | Field | Value |
 |---|---|
 | Owner | **Solution Architect** (RACI-CMS-001 §2, §5) |
-| Status of the set | 28 accepted records; none superseded |
 | Basis | PRD DEC-01…DEC-24, TDD §14 (GAP-01…GAP-14), `docs/references.md` |
 | Rules | (1) Every ADR cites ≥ 1 `R-xx` from the reference catalogue. (2) A cited URL must never be one of the **rejected** entries. (3) A decision is not reopenable without a superseding ADR. (4) An ADR is a decision about something **expensive to reverse**; if it is not, it belongs in the catalogue, not here. |
 
@@ -19,7 +18,7 @@ Generated from the records themselves. The owner is each ADR's own H1,
 header fields and `## References` section — edit the record, never this table.
 
 <!-- BEGIN GENERATED: adr-index — owner: adr/[0-9][0-9][0-9][0-9]-*.md. Edit the owner, not this block. -->
-| Status of the set | 28 accepted records; none superseded |
+| Status of the set | 29 accepted records; none superseded |
 
 | ADR | Title | Gate | Addresses | Evidence |
 |---|---|---|---|---|
@@ -51,6 +50,7 @@ header fields and `## References` section — edit the record, never this table.
 | [0026](0026-generated-dependency-manifests.md) | Package dependency lists are generated from the interface ledger | PH-3 | Refines: ADR-0007 | R-META-09, R-META-26, R-BND-12, R-BND-13, R-BUILD-02, R-BUILD-09 |
 | [0027](0027-phase-sequencing-is-dependency-gated.md) | Phase sequencing is gated on artefact dependencies, not on phase order | PH-1 | Amends: PRD §18 (see PR-9 in the ADR README) | R-TT-03, R-OWN-03, R-OWN-04, R-RES-10, R-BUILD-01 |
 | [0028](0028-one-owner-per-derived-fact.md) | Every derived fact has one owner; prose states rules, the model holds values | PH-1 | Amends: none | R-META-07, R-META-09, R-META-19, R-META-20, R-META-01, R-META-03, R-OWN-01, R-OWN-02, R-OWN-05, R-DOC-01, R-DOC-02 |
+| [0029](0029-withdraw-r-bnd-11-citations.md) | Two records cited a rejected entry; the claims are true and the citations are withdrawn | PH-7 | Closes: `adr/README.md` rule-2 violation found by `DOC-90`; Amends: ADR-0012, ADR-0017 (reference lists only — neither decision is reopened) | R-BND-01, R-BND-02, R-BND-04, R-BND-11, R-BND-12, R-BND-13, R-SOLID-10, R-BND-07, R-META-26, R-DOC-02 |
 <!-- END GENERATED: adr-index -->
 
 ---
@@ -102,6 +102,7 @@ change to this section, not to the generated one.
 | DEC-17…DEC-19 | 0021, 0026, 0013 | authored; closed as a group, no record names the range |
 | DEC-20…DEC-24 | 0013, 0019, 0020, 0026 | authored; closed as a group, no record names the range |
 | DEC-21, DEC-22 | 0020, 0012 | authored; overlaps the range above |
+| ADR-0012, ADR-0017 | 0029 | authored; R-BND-11 citations withdrawn, decisions unchanged |
 | DEC-25 | 0025 | authored; ADR-0025 carries it under `Supports:` (PRD D-03, §6.1), not `Closes:` |
 | DEC-10 | — **no record; see the note under the generated table** | enforced by `check:pins` and `D-11`; cheap to reverse per RES-01, so rule 3 does not require a record |
 
@@ -110,9 +111,14 @@ change to this section, not to the generated one.
 ## Requested changes to `docs/PRD.md`
 
 **Applied in PRD v3.1.0:** PR-2 (MF-4 split into MF-4a…MF-4d, PERF-03 reachability stated),
-PR-5 (`.envrc` pinned `source_url` form), plus §21 items 11–13 and the gate naming unification.
-**Not yet applied:** PR-3, PR-4, PR-6, PR-7, PR-8, PR-9. Each is listed below with its source ADR;
-none is disputed and none is blocked.
+PR-5 (`.envrc` pinned `source_url` form), PR-8 (DEC-25), PR-9 (§18 prerequisite-gating, the closed
+overlap set and the two hard exclusions), plus §21 items 11–13 and the gate naming unification.
+**Not yet applied:** PR-3, PR-4, PR-6, PR-7. Each is listed below with its source ADR; none is
+disputed and none is blocked.
+
+PR-9 was the sharpest of the nine. §18 still said *"a phase starts only when the previous
+phase's exit criterion objectively holds"* while ADR-0027 had already replaced it — so the
+document violated §21 item 12, the precedence clause added in this same version.
 
 These are PRD amendments this record set requires. They are listed rather than applied, because the PRD is SA-owned and versioned separately (RACI §2).
 

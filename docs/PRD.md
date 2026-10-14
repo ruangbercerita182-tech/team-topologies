@@ -1021,7 +1021,17 @@ The single most consequential edge is `teams/banner/client → banner-api`. A do
 
 ## 18. Build phases
 
-Phases are ordered. A phase starts only when the previous phase's exit criterion objectively holds.
+**A unit of work may start when the exit criteria of its *declared prerequisites* hold — not when the preceding phase completes.** The phase numbering below documents a dependency graph; it is not a serialisation rule.
+
+The v3.0.0 text was *"Phases are ordered. A phase starts only when the previous phase's exit criterion objectively holds."* Strictly applied that serialises all ten phases, costing roughly four weeks and delaying the first mechanically-caught violation from week ~12 to week 18 — which inverts the programme's own premise. **Corrected in v3.1.0 by ADR-0027**, which is the normative statement of the rule below.
+
+Three constraints make the relaxation safe rather than merely convenient:
+
+1. **PH-1 is a hard serial gate.** No phase starts before PH-1's exit criterion holds (one lockfile, no nested `.git`, no duplicate package names). Workspace truth is the one thing every later phase assumes and cannot independently establish.
+2. **The overlap set is closed.** Exactly these four pairs may run concurrently: PH-4 ∥ PH-3 (templates consume the catalogue, not the generator's output); PH-5 ∥ PH-3 and PH-4 (environment work touches `devenv.nix`, not `catalog/`); PH-7 ∥ PH-6 (checks are static analysis; the reference implementation is merely what they analyse); PH-10 drafting ∥ PH-9 (documentation describes artefacts that exist from PH-3 onward). Anything not listed is serial by default, and **adding a pair is an amendment to ADR-0027, not a scheduling decision.**
+3. **Two exclusions are decisions, not omissions.** PH-9 may not precede PH-3 — the generator emits the `CODEOWNERS` and boundary configuration for the new topology, so relocating first means hand-maintaining both. PH-8 may not precede PH-7 — a budget with no enforcement gate is a wish (§15).
+
+The prerequisite edges themselves are declared in `IMPLEMENTATION-PLAN.md` §5 as `D-1 … D-7`. That list is load-bearing: an entry that is wrong is a scheduling defect, not a documentation typo, and editing it requires the ADR-0027 amendment path.
 
 ### PH-1 — Workspace truth
 **Work:** extend `workspaces` to `teams/*/*` per FR-15; delete per-package lockfiles (RES-01) and any nested `.git` (FR-26); namespace-qualify every package name; consolidate to the root lockfile; correct `README.md` per FR-27; add missing `lint`/`typecheck` scripts (FR-28); remove scaffold content; establish branch protection with required reviewers (FR-11) and the LSC rule (FR-01, AC-11).
