@@ -1,0 +1,12 @@
+# Python bytecode
+__pycache__/
+*.py[cod]
+
+# Vendored agent skills (287 packages, 13M) are not part of the CMS
+# programme. Untracked deliberately — confirm before adding.
+.agents/
+
+# check_docs baseline output is generated; regenerate with:
+#   python3 tools/docs/check_docs.py -C docs --fail-on none --format json
+#   > tools/docs/baseline.json
+tools/docs/baseline.json
