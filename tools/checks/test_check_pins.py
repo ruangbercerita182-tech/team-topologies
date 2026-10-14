@@ -20,6 +20,7 @@ sys.path.insert(0, str(HERE))
 
 from check_pins import is_floating, main  # noqa: E402
 from check_toolchain import main as tc_main  # noqa: E402
+from check_lsc import evaluate, load_teams  # noqa: E402
 
 FIX = HERE / "fixtures"
 TC_FIX = HERE / "fixtures" / "toolchain"
@@ -36,6 +37,31 @@ TC_CASES = [
     ("clean", 0, "one manager, one root lockfile, no nested .git"),
     ("nested", 1, "a nested lockfile, a nested .git and a second manager are all reported"),
     ("two-root-locks", 1, "two lockfiles at the root resolve differently"),
+]
+
+# T-107 / FR-01 / AC-11. The PRD states two of these verbatim:
+#   "a PR touching two teams' directories with no Owners-Override trailer is
+#    rejected"; "a PR carrying the trailer with only one approval is rejected."
+SLUGS = {"banner", "web", "platform"}
+TWO_TEAMS = ["teams/banner/api/a.ts", "teams/web/client/b.tsx"]
+TRAILER_BOTH = "subject: x\n\nOwners-Override: banner, web"
+
+LSC_CASES = [
+    # (label, paths, approvers, author, author_team, message, team_approvals, expect_rejected)
+    ("one owner, no trailer", ["teams/banner/api/a.ts"], ["ana"], None, None, "", [], False),
+    ("two owners, no trailer", TWO_TEAMS, ["ana"], None, None, "", [], True),
+    ("trailer, one approval", TWO_TEAMS, ["ana"], None, None, TRAILER_BOTH, [], True),
+    ("trailer, two approvals", TWO_TEAMS, ["ana", "bob"], None, None, TRAILER_BOTH, [], False),
+    ("trailer names only one team", TWO_TEAMS, ["ana", "bob"], None, None,
+     "Owners-Override: banner", [], True),
+    ("proposer owns one, other approved", TWO_TEAMS, ["ana"], None, "banner", "", ["web"], False),
+    ("proposer owns one, other silent", TWO_TEAMS, ["ana"], None, "banner", "", [], True),
+    ("proposer owns all touched", ["teams/banner/a.ts", "teams/banner/api/b.ts"],
+     ["ana"], None, "banner", "", [], False),
+    ("undeclared directory", ["teams/ghost/a.ts", "teams/banner/b.ts"],
+     ["ana"], None, None, "", [], True),
+    ("malformed trailer entry", TWO_TEAMS, ["ana", "bob"], None, None,
+     "Owners-Override: !!!!", [], True),
 ]
 
 # (spec, expected floating) -- is_floating decides, not the file format
@@ -77,6 +103,15 @@ def main_test() -> int:
         else:
             print(f"  ok    toolchain/{name:12} exit {rc}  — {why}")
 
+    from check_lsc import rejected as lsc_rejected
+    for label, paths, appr, author, ateam, msg, tapprovals, expect in LSC_CASES:
+        d = evaluate(paths, appr, author, ateam, msg, tapprovals, SLUGS)
+        got = lsc_rejected(d)
+        if got != expect:
+            failures.append(f"lsc[{label}]: rejected={got}, expected {expect}; reasons={d.reasons}")
+        else:
+            print(f"  ok    lsc/{label:32} {'reject' if got else 'allow '}  — FR-01/AC-11")
+
     for spec, expect in UNIT:
         got = is_floating(spec) is not None
         if got != expect:
@@ -102,7 +137,8 @@ def main_test() -> int:
         for f in failures:
             print(f"  - {f}")
         return 1
-    print(f"all {len(CASES) + len(TC_CASES)} fixtures and {len(UNIT)} unit cases behaved as specified")
+    print(f"all {len(CASES) + len(TC_CASES)} fixtures, {len(LSC_CASES)} LSC cases "
+          f"and {len(UNIT)} unit cases behaved as specified")
     return 0
 
 

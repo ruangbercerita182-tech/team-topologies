@@ -856,7 +856,11 @@ BUD-07 is the only one set to zero, and the reason is that its failure is silent
 
 **FR-01 — LSC is the only cross-team edit path.**
 No change to a directory owned by another team may merge without either (a) the owning team's approval, or (b) an approved LSC carrying an `Owners-Override` trailer and a second non-author approver (AC-11).
-*Verification:* a PR touching two teams' directories with no `Owners-Override` trailer is rejected by branch protection. A PR carrying the trailer with only one approval is rejected.
+*Verification:* `check:lsc` rejects a PR that touches a non-owning team's directory when neither (a) that team approved nor (b) an `Owners-Override` trailer naming it is present. A PR carrying the trailer with only one approval is rejected (AC-11). Every case above is a fixture in `tools/checks/test_check_pins.py`.
+
+**Resolution of an ambiguity in the v3.0.0 text, stated in v3.1.0.** The v3.0.0 verification sentence read "a PR touching two teams' directories with no `Owners-Override` trailer is rejected", while FR-01's own text made "(a) the owning team's approval" a sufficient alternative to the trailer. Read together they cannot both hold: the first rejects a change the second permits. The second is now normative and the first is read as assuming the proposer owns none of the touched paths.
+
+The rule that reconciles them is §1.4's own quotation of Chromium — the override is recorded **on every non-owning team touched**. So a change proposed by a team that already owns every path it touches overrides nobody, needs no trailer, and is judged only on whether the other owners approved. A change touching any directory the proposer does not own needs either that owner's approval or a trailer naming it. `check:lsc` implements exactly this and takes `--author-team` and `--team-approval` from CI; an approver login cannot be mapped to a team inside the check, so it is passed in rather than guessed.
 
 **FR-02 — Strict catalog schema authority.**
 `catalog/schema/*.schema.ts` defines every catalog document with zod, `.strict()` on every object so unknown keys are rejected (R-CFG-03).

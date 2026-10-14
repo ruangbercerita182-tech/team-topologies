@@ -82,3 +82,33 @@ did it would be forging a sign-off.
 **On this repository it currently fails two rules and passes after fixing them**, because
 all three criteria it found were genuine: PH-1's entry criterion, and two exit criteria
 written as prose ("contracts green", "PERF-02/03 enforced").
+
+## check_lsc — FR-01 / AC-11 (T-107)
+
+The only cross-team edit path. Two legal routes:
+
+- **(a)** every non-owning team approves. A change proposed by a team that owns
+  every path it touches overrides nobody, so it needs no trailer.
+- **(b)** an `Owners-Override` trailer naming every non-owning team touched, plus
+  a second approver who is not the author (AC-11).
+
+Route (b) is the Chromium LSC mechanism §1.4 quotes. The trailer is read from the
+commit being checked, so it expires on merge by construction — it cannot outlive
+its change.
+
+**Ownership is resolved by ADR-0008's single rule, not by parsing CODEOWNERS.**
+Every path under `teams/<slug>/` is owned by that slug; everything outside `teams/`
+is owned by platform. That is the rule the generated `CODEOWNERS` implements, so
+there is nothing here that can disagree with the file.
+
+A directory under `teams/` with no catalogue document is **rejected**, not treated
+as unowned. ADR-0008 has no fallback, so a change touching it cannot be classified
+as cross-team or not — and a check that guessed either way would be a guess.
+
+```sh
+python3 tools/checks/check_lsc.py -C . --changed a.ts --changed b.tsx
+python3 tools/checks/check_lsc.py -C . --message-file "$(git log -1 --pretty=%B)"
+```
+
+`--author-team` and `--team-approval` come from CI. An approver login cannot be
+mapped to a team inside the check, so it is passed in rather than guessed.
