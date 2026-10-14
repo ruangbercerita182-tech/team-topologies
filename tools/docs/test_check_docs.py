@@ -32,6 +32,9 @@ CASES = [
     ("doc05-dec-uncovered", "DOC-05",  "warning"),
     ("doc06-gap-unclosed",  "DOC-06",  "error"),
     ("doc07-gate-alias",    "DOC-07",  "error"),
+    ("doc08-version-conflict", "DOC-08", "error"),
+    ("doc08-owner-conflict",   "DOC-08", "error"),
+    ("doc08-unregistered",     "DOC-08", "warning"),
 ]
 
 

@@ -377,6 +377,185 @@ def doc_07_gate_names(c: Corpus) -> list[Finding]:
     return out
 
 
+# --------------------------------------------------------------------------
+# DOC-08  the artefact index agrees with the artefacts themselves
+# --------------------------------------------------------------------------
+# README.md §2 is a hand-maintained table of (artefact, id, version, status,
+# accountable). Every one of those five values is already declared by the
+# artefact in its own "| Field | Value |" header block, so the table is
+# derivable and can be checked. This is the Tier A case ADR-0028 would fix
+# by generating it; until then it is at least checked.
+
+HEADER_FIELDS = ("Document ID", "Version", "Status", "Accountable", "Owner")
+
+
+def _clean(v: str) -> str:
+    v = v.replace("**", "").replace("`", "").strip()
+    return re.sub(r"\s+", " ", v)
+
+
+def _head_role(v: str) -> str:
+    """First clause of an accountable value.
+
+    '**DevOps lead**; Technical Lead co-signs application order' and
+    'DevOps lead (TL co-signs app order)' both reduce to 'DevOps lead'.
+    Comparing full strings produced a false positive on exactly that pair.
+    """
+    v = _clean(v)
+    for sep in (";", "(", "—", "–"):
+        v = v.split(sep)[0]
+    return v.strip().rstrip(",").strip().lower()
+
+
+def _artefact_header(p: Path, text: str) -> dict[str, tuple[int, str]]:
+    """Parse the leading '| Field | Value |' block of a document.
+
+    The block sits below the H1 title, so non-table lines are skipped until
+    the table opens; only a non-blank line after it has opened ends the
+    parse. Breaking on the first non-table line found the title instead.
+    """
+    out: dict[str, tuple[int, str]] = {}
+    seen_table = False
+    for i, line in enumerate(text.splitlines(), 1):
+        if not line.startswith("|"):
+            if seen_table and line.strip():
+                break
+            continue
+        seen_table = True
+        cells = [_clean(c) for c in line.strip("|").split("|")]
+        if len(cells) < 2 or cells[0] == "Field" or set(cells[0]) <= set("-: "):
+            continue
+        for field in HEADER_FIELDS:
+            if cells[0] == field and field not in out:
+                out[field] = (i, cells[1])
+    return out
+
+
+def _index_rows(c: Corpus) -> list[tuple[int, list[str]]]:
+    """Rows of the artefact index table in README.md section 2."""
+    readme = c.root / "README.md"
+    if not readme.exists():
+        return []
+    lines = c.text[readme].splitlines()
+    start = None
+    for i, line in enumerate(lines):
+        if line.startswith("## ") and "artefact index" in line.lower():
+            start = i
+            break
+    if start is None:
+        return []
+    rows: list[tuple[int, list[str]]] = []
+    # start at the line AFTER the matched heading: the heading itself matches
+    # the "## " terminator below and would end the scan immediately.
+    for i in range(start + 1, min(start + 40, len(lines))):
+        line = lines[i]
+        if line.startswith("## "):
+            break
+        if not line.startswith("|"):
+            continue
+        cells = [_clean(c) for c in line.strip("|").split("|")]
+        if len(cells) < 5 or cells[1] == "ID":
+            continue
+        if all(set(x) <= set("-: ") for x in cells[:5]):
+            continue
+        rows.append((i + 1, cells))
+    return rows
+
+
+ID_RE = re.compile(r"\b([A-Z][A-Z-]+-CMS-\d{3})\b")
+
+
+def doc_08_artefact_index(c: Corpus) -> list[Finding]:
+    rows = _index_rows(c)
+    if not rows:
+        return [Finding("DOC-08", "error", "README.md", 0,
+                        "artefact index table not found; rule README.md 5 is unverified")]
+
+    artefacts: dict[str, tuple[Path, dict]] = {}
+    for p in c.files:
+        if p.parent.name == "adr":
+            continue
+        head = _artefact_header(p, c.text[p])
+        if "Document ID" not in head:
+            continue
+        _, doc_id = head["Document ID"]
+        m = ID_RE.search(doc_id)
+        if not m:
+            continue
+        artefacts[m.group(1)] = (p, head)
+
+    out: list[Finding] = []
+
+    # duplicate ids
+    seen: dict[str, Path] = {}
+    for doc_id, (p, _h) in artefacts.items():
+        if doc_id in seen:
+            out.append(Finding(
+                "DOC-08", "error", rel(c, p), 0,
+                f"Document ID {doc_id} is also declared by {rel(c, seen[doc_id])}",
+            ))
+        seen[doc_id] = p
+
+    indexed: set[str] = set()
+    for line_no, cells in rows:
+        name, id_cell, ver, status, owner = cells[0], cells[1], cells[2], cells[3], cells[4]
+        ids = ID_RE.findall(id_cell)
+        if not ids:
+            continue  # range row (ADR-0001...ADR-0027) or prose; not a single artefact
+        doc_id = ids[0]
+        indexed.add(doc_id)
+        if doc_id not in artefacts:
+            out.append(Finding(
+                "DOC-08", "error", "README.md", line_no,
+                f"index registers {doc_id} ({name}) but no document declares it",
+            ))
+            continue
+
+        p, head = artefacts[doc_id]
+
+        for idx_cell, field in ((ver, "Version"), (status, "Status")):
+            if field in head:
+                declared = _clean(head[field][1])
+                claimed = _clean(idx_cell)
+                if claimed in ("—", "-", "") or declared in ("—", "-", ""):
+                    continue
+                if not (declared.lower().startswith(claimed.lower())
+                        or claimed.lower().startswith(declared.lower())):
+                    out.append(Finding(
+                        "DOC-08", "error", rel(c, p), head[field][0],
+                        f"index says {field} {claimed!r}; {rel(c, p)} declares {declared!r}",
+                        f"README.md:{line_no}",
+                    ))
+
+        declared_owner = head.get("Accountable") or head.get("Owner")
+        if declared_owner is None:
+            if _clean(owner) not in ("—", "-", ""):
+                out.append(Finding(
+                    "DOC-08", "warning", rel(c, p), 0,
+                    f"index assigns accountable {owner!r} but {rel(c, p)} declares none",
+                    f"README.md:{line_no}; RACI section 2 rule 1 "
+                    f"(one accountable role per artefact) cannot be verified from the artefact",
+                ))
+        elif _clean(owner) not in ("—", "-", ""):
+            if _head_role(owner) != _head_role(declared_owner[1]):
+                out.append(Finding(
+                    "DOC-08", "error", rel(c, p), declared_owner[0],
+                    f"index names accountable {owner!r}; {rel(c, p)} declares "
+                    f"{declared_owner[1]!r}",
+                    f"README.md:{line_no}",
+                ))
+
+    # artefacts that declare an id nobody registered
+    for doc_id, (p, _h) in sorted(artefacts.items()):
+        if doc_id not in indexed:
+            out.append(Finding(
+                "DOC-08", "warning", rel(c, p), 0,
+                f"{doc_id} is not registered in the README.md artefact index",
+                "README.md section 5 rule 5: register any new artefact and give it a <TYPE>-CMS-00n ID",
+            ))
+    return out
+
+
 CHECKS = [
     ("DOC-01", doc_01_references),
     ("DOC-02/03", doc_02_03_links),
@@ -384,6 +563,7 @@ CHECKS = [
     ("DOC-05", doc_05_dec_coverage),
     ("DOC-06", doc_06_gap_closure),
     ("DOC-07", doc_07_gate_names),
+    ("DOC-08", doc_08_artefact_index),
 ]
 
 
