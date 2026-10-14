@@ -72,6 +72,41 @@ retired artefact's header no longer has to be current.
 **No blind spots remain declared.** That is not the same as having none — it means the ones we
 could name are closed, and the ones we cannot name yet are the ones nobody has been bitten by.
 
+## 8. Open: four plans are still `Proposed`, and that blocks PH-1
+
+`IMPLEMENTATION-PLAN.md`, `TIMP-CMS-001`, `TEST-CMS-001` and `DEP-CMS-001` all carry status
+`Proposed`. PH-1's entry criterion now requires every artefact the phase depends on to be
+approved, so the phase cannot start until at least that plan is accepted — and `IMP-CMS-001`
+is the plan that *defines* PH-1, which is the circularity stated plainly rather than assumed
+away.
+
+**SA did not mark them accepted.** Acceptance is a signature by the accountable role
+(`RACI.md` §2, §5). Marking a plan accepted to unblock a phase would be forging a sign-off,
+and `check_plans.py` reports the state rather than setting it.
+
+`check_plans.py` PLANS-03 reports this on every run and does **not** gate on it. An unapproved
+plan does not become correct by failing CI every day, and a permanently-red gate gets switched
+off. `--strict` makes it gate when the programme wants that pressure.
+
+### What the PH-1 work did complete
+
+Three tasks are done, out of order, because `TIMP-CMS-001` §2 sequences T-105 and T-108 as
+standalone scripts that do not depend on the workspace existing:
+
+| Task | Delivered |
+|---|---|
+| T-105 | `check_toolchain` — one package manager (FR-27), one root lockfile (RES-01), no nested `.git` (FR-26) |
+| T-108 | `check_pins` — floating references rejected in build-affecting positions (FR-21, D-11) |
+| — | `check_plans` — every phase criterion observable; PH-1's entry criterion was not |
+
+**T-101 … T-104, T-106, T-107 and T-109 are not done and cannot be.** They all assume a
+workspace exists — `teams/*/*` packages, five lockfiles, nested `.git`, deployables missing
+`lint`/`typecheck`. This repository has no application code; `check_pins` scans 0 manifests and
+passes vacuously. That is a gate standing before there is anything to catch, which is not the
+same as PH-1 being satisfied.
+
+---
+
 ## Re-run
 
 ```sh
