@@ -3,16 +3,17 @@
 | Field | Value |
 |---|---|
 | Document ID | REF-CMS-001 |
-| Version | 3.0.0 |
+| Version | 3.1.0 |
 | Status | Active |
 | Date | 2026-10-14 |
+| Accountable | **Solution Architect** (RACI-CMS-001 §2) |
 | Supersedes | REF-CMS-001 v1.0.0 (carried ~150 refs) |
-| Consumed by | `docs/PRD.md` (PRD-CMS-001 v3.0.0) |
-| Total references | 403 admissible (379 clean VERIFIED + 24 PARTIAL with a stated limitation) — 379 as of v3.0.0, +24 added by §R-25 for TDD-CMS-001 |
+| Consumed by | `docs/PRD.md` (PRD-CMS-001 v3.1.0) |
+| Total references | 405 admissible (381 clean VERIFIED + 24 PARTIAL with a stated limitation) — 379 as of v3.0.0, +24 added by §R-25 for TDD-CMS-001, +2 added by §R-26 for ADR-0028 |
 | Consumed also by | `docs/TDD.md` (TDD-CMS-001 v1.0.0) |
-| Rejected (never cite) | 77 (66 in the R-23 table + 11 carried as numbered R-xx entries) |
+| Rejected (never cite) | 79 (66 in the R-23 table + 11 carried as numbered R-xx entries + 2 rejected at the ADR-0028 verification step) |
 
-> **Section index.** R-1 Team Topologies · R-2 DDD · R-3 SOLID · R-4 Clean Architecture · R-5 Repository topology · R-6 Metadata · R-7 Dev environment · R-8 Aggregator/BFF · R-9 GraphQL federation · R-10 Contracts · R-11 Resilience · R-12 Micro-frontends · R-13 Module Federation · R-14 Web perf budgets · R-15 Backend efficiency · R-16 Build/CI efficiency · R-17 Boundary enforcement · R-18 Configuration · R-19 Ownership · R-20 Cost allocation · R-21 BFF boundary · R-22 Platform-scope policy · R-23 Rejected · R-24 Maintenance · **R-25 Addendum (TDD-CMS-001)**.
+> **Section index.** R-1 Team Topologies · R-2 DDD · R-3 SOLID · R-4 Clean Architecture · R-5 Repository topology · R-6 Metadata · R-7 Dev environment · R-8 Aggregator/BFF · R-9 GraphQL federation · R-10 Contracts · R-11 Resilience · R-12 Micro-frontends · R-13 Module Federation · R-14 Web perf budgets · R-15 Backend efficiency · R-16 Build/CI efficiency · R-17 Boundary enforcement · R-18 Configuration · R-19 Ownership · R-20 Cost allocation · R-21 BFF boundary · R-22 Platform-scope policy · R-23 Rejected · R-24 Maintenance · R-25 Addendum (TDD-CMS-001) · **R-26 Addendum (ADR-0028)**.
 >
 **Verification rule.** Every reference below was retrieved by HTTP and its content read on 2026-10-14. A reference is admissible in the PRD only if it appears here with status `VERIFIED`. Any URL added after this date must be verified and added here *before* it is cited anywhere (PRD §20.2).
 
@@ -690,6 +691,8 @@ This catalogue does not include platform-as-a-service vendors (Retool, Salesforc
 | "Design system as a service" | Industry vernacular, no canonical source | R-MFE-01's custodian model |
 | OWASP Subresource Integrity Cheat Sheet | 404 — no such page | R-MFE-17 (MDN SRI) |
 | OWASP supply-chain-security project page | 404 on all tried paths | R-MFE-15, R-MFE-16 |
+| Tan, Wagner & Treude, *Detecting outdated code element references in software repository documentation* (Springer `10.1007/s10664-023-10397-6`) | **Not retrievable, not disproved.** The landing page returned an anti-bot challenge on 2026-10-14, so the content could not be read. The paper is believed to exist and to report drift rates for over 3,000 GitHub projects; **none of its numbers are citable until the full text is read.** Recorded here so the claim is not silently re-derived from a search snippet later | R-DOC-02, and the fixture suite at `tools/docs/` for the corpus's own measured drift |
+| Hummel, Deißenbock et al., *The loss of architectural knowledge during system evolution* (Munich Re / ConQAT case study) | **Not retrievable as text.** The PDF resolved (HTTP 200) but could not be decoded to readable text on 2026-10-14. Its widely-quoted "70–90% of nonconformances are documentation flaws" figure is **not citable from this catalogue** | R-OWN-05 (DORA, for the empirical base actually available) |
 
 ---
 
@@ -697,7 +700,8 @@ This catalogue does not include platform-as-a-service vendors (Retool, Salesforc
 
 1. A reference may be cited in the PRD only if it appears above with status `VERIFIED` or `PARTIAL` and its limitation is honoured.
 2. Any URL added after 2026-10-14 must be fetched and confirmed before it is added.
-3. When a URL is discovered to be dead, move it to R-9 immediately and substitute. Do not leave it in place with a footnote.
+3. When a URL is discovered to be dead, move it to **R-23** immediately and substitute. Do not leave it in place with a footnote. (Corrected 2026-10-14: this rule previously said "R-9", which is the GraphQL federation section and never held the rejected list.)
+4. A reference that **cannot be retrieved at all** — anti-bot challenge, undecodable payload, paywall — is neither `VERIFIED` nor `REJECTED` on the merits. It is admitted to R-23 marked *not retrievable*, so that no figure from it is ever cited from a search snippet.
 4. When two sources disagree, record both and mark which one is a vendor claim (R-MONO-44, R-BUILD-22, R-BUILD-23, R-BE-01, R-BUILD-41) and which is independent (R-MONO-21, R-MFE-04, R-MFE-06, R-MONO-14).
 5. When a claim has **no** citable source — build cache hit ratio, bundler memory, Fastify-vs-Express — the PRD must express it as a **named measurement the team must take**, never as an asserted fact. See R-BUILD-19, R-BUILD-40, R-BE-01.
 
@@ -771,3 +775,20 @@ This catalogue does not include platform-as-a-service vendors (Retool, Salesforc
 | R-INT-02 | JSON Web Token (JWT) Profile for OAuth 2.0 Access Tokens (RFC 9068) | IETF / OAuth WG | https://www.rfc-editor.org/rfc/rfc9068.html | VERIFIED | The access-token profile a **resource server** validates locally. Basis for TDD §22.2 step 7: a bounded-context service verifies the end-user session itself, with no call back to the shell or aggregator — which is what keeps the composition tier out of the authorisation path (ADR-0015). |
 | R-SEC-01 | OWASP API Security Top 10 — 2023 | OWASP | https://owasp.org/API-Security/editions/2023/en/0x11-t10/ | VERIFIED | The authoritative enumeration behind TDD §22.1. Load-bearing for two specific rows: **API1 Broken Object Level Authorisation** motivates per-*object* authorisation and the denial cases in the contract suite (ADR-0020), and **API5 Broken Function Level Authorisation** motivates the deny-by-default route coverage check (ADR-0021). Cited in place of the OWASP pages already listed as REJECTED in R-23. |
 | R-DEP-01 | XII. Build, release, run — The Twelve-Factor App | Wiggins / Heroku | https://12factor.net/build-release-run | VERIFIED | Separation of build, release and run. The mechanism behind TDD §23.1's "build once, promote the same artefact, never rebuild per environment", and behind rollback-by-pointer-change for images and config. Pairs with R-CFG-01 (config, which ADR-0001 already separates from versioning). |
+
+---
+
+## R-26 — Addendum for ADR-0028 (added 2026-10-14)
+
+**Why this section exists.** ADR-0028 decided that every derived fact in the governance set has one owner, and that a check whose verdict depends on parsing prose is not a check. Two sources were needed: one to justify refusing to generate authored rationale, and one to supply a mechanism that is already sound against this corpus.
+
+**Verification discipline applied here is stricter than usual, deliberately.** Both entries below were retrieved and read on 2026-10-14 before being cited. Two further candidates for this section were **rejected at the verification step** and are recorded in §R-23 rather than cited: Tan, Wagner & Treude, *Detecting outdated code element references in software repository documentation* (Springer, `10.1007/s10664-023-10397-6`) — the landing page returned an anti-bot challenge, so the content could not be read; Hummel, Deißenbock et al., *The loss of architectural knowledge during system evolution* — the PDF resolved but could not be decoded as text. **A source that could not be read is not `VERIFIED`.**
+
+### R-26a — Documentation structure and link coherence
+
+| ID | Title | Author / Org | URL | Status | Establishes |
+|---|---|---|---|---|---|
+| R-DOC-01 | Diátaxis — a systematic approach to technical documentation | Daniele Procida | https://diataxis.fr/ | VERIFIED | Four documentation forms on a two-dimensional map: tutorials, how-to guides, reference, explanation. The distinction ADR-0028 depends on is that **reference is canonical, complete and generated, while explanation is discursive and authored**. Retrieved and read: the site states it "prescribes approaches to content, architecture and form that emerge from a systematic approach to understanding the needs of documentation users", and warns that when the forms blur "writing style and content make their way into inappropriate places". Basis for ADR-0028's rejection of generating ADR rationale, and for treating Tier A and Tier B as different kinds of artefact rather than two tiers of the same one. |
+| R-DOC-02 | remark-validate-links | Titus Wormer / remark (unified) | https://github.com/remarkjs/remark-validate-links | VERIFIED | Offline validation that markdown links and images point to **existing local files and existing headings** in a Git repository. Retrieved and read: the README states it "can work offline (making this plugin fast and prone to fewer false positives)", and documents distinct diagnostics `missing-file` and `missing-heading` / `missing-heading-in-file`. Adopted in ADR-0028 as the Tier A check for link and anchor resolution (DOC-02, DOC-03), because its subject is exactly this corpus's failure mode and it produces no false positives on the current document set. |
+
+> **Scope note.** This section deliberately contains **two** entries, not a survey of documentation-tooling. The available drift-detection tools report the highest numbers against documentation-versus-source-code drift, which is not this repository's failure mode: `docs/` has no source code to drift from. Citing them would have lent an unsupported appearance of evidence to ADR-0028. `R-OWN-05` is cited in that record to record the *absence* of a survey finding, not to supply one.

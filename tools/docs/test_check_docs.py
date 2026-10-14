@@ -29,12 +29,15 @@ CASES = [
     ("doc03-link-anchor",   "DOC-03",  "warning"),
     ("doc04-adr-range",     "DOC-04",  "error"),
     ("doc04-adr-count",     "DOC-04",  "warning"),
+    ("doc04-partial-range-valid", None,  None),
+    ("doc04-partial-range-gap",   "DOC-04", "error"),
     ("doc05-dec-uncovered", "DOC-05",  "warning"),
     ("doc06-gap-unclosed",  "DOC-06",  "error"),
     ("doc07-gate-alias",    "DOC-07",  "error"),
     ("doc08-version-conflict", "DOC-08", "error"),
     ("doc08-owner-conflict",   "DOC-08", "error"),
     ("doc08-unregistered",     "DOC-08", "warning"),
+    ("doc09-suppressed",       None,      None),
 ]
 
 
@@ -51,7 +54,7 @@ def main() -> int:
             failures.append(f"{name}: fixture directory missing")
             continue
 
-        findings, corpus = run(d, "none")
+        findings, _suppressed, corpus = run(d, "none")
         got = codes(findings)
 
         if expect is None:

@@ -227,14 +227,34 @@ def doc_04_adr_claims(c: Corpus) -> list[Finding]:
     count = len(c.adrs)
 
     out: list[Finding] = []
+    present = set(nums)
     for p in c.files:
         for i, line in enumerate(c.text[p].splitlines(), 1):
             for a, b in ADR_RANGE.findall(line):
-                if int(a) != lo or int(b) != hi:
+                a, b = int(a), int(b)
+                if a > b:
+                    continue
+                # A range whose lower bound is 0001 claims the whole set, so it
+                # must end at the highest record. A range starting above 0001 is
+                # a partial claim ("0013...0028 were written afterwards") and is
+                # checked for existence only -- an earlier draft of this check
+                # compared every range against the full set and reported correct
+                # prose as a contradiction.
+                if a == lo and b != hi:
                     out.append(Finding(
                         "DOC-04", "error", rel(c, p), i,
-                        f"claims the ADR set is {a}–{b}; on disk it is "
+                        f"claims the ADR set is {a:04d}–{b:04d}; on disk it is "
                         f"{lo:04d}–{hi:04d} ({count} records)",
+                        line.strip()[:160],
+                    ))
+                    continue
+                missing = [n for n in range(a, b + 1) if n not in present]
+                if missing:
+                    out.append(Finding(
+                        "DOC-04", "error", rel(c, p), i,
+                        f"claims the range {a:04d}–{b:04d}, but "
+                        + ", ".join(f"{n:04d}" for n in missing)
+                        + " do not exist",
                         line.strip()[:160],
                     ))
             if not ADR_CONTEXT.search(line):
@@ -465,6 +485,17 @@ def _index_rows(c: Corpus) -> list[tuple[int, list[str]]]:
 ID_RE = re.compile(r"\b([A-Z][A-Z-]+-CMS-\d{3})\b")
 
 
+def _declares_owner(v: str) -> bool:
+    """Is this accountable cell a real name, or an explicit 'none'?
+
+    A leading em dash is how this corpus writes 'nobody owns this' -- the
+    artefact index uses it for RACI-CMS-001. Treating the cell as a value made
+    DOC-08 report '— unassigned; referred to PM' as an owner.
+    """
+    return _clean(v).strip() not in ("—", "-", "", "— unassigned; referred to PM") \
+        and not _clean(v).lstrip().startswith(("—", "-"))
+
+
 def doc_08_artefact_index(c: Corpus) -> list[Finding]:
     rows = _index_rows(c)
     if not rows:
@@ -529,14 +560,14 @@ def doc_08_artefact_index(c: Corpus) -> list[Finding]:
 
         declared_owner = head.get("Accountable") or head.get("Owner")
         if declared_owner is None:
-            if _clean(owner) not in ("—", "-", ""):
+            if _declares_owner(owner):
                 out.append(Finding(
                     "DOC-08", "warning", rel(c, p), 0,
                     f"index assigns accountable {owner!r} but {rel(c, p)} declares none",
                     f"README.md:{line_no}; RACI section 2 rule 1 "
                     f"(one accountable role per artefact) cannot be verified from the artefact",
                 ))
-        elif _clean(owner) not in ("—", "-", ""):
+        elif _declares_owner(owner):
             if _head_role(owner) != _head_role(declared_owner[1]):
                 out.append(Finding(
                     "DOC-08", "error", rel(c, p), declared_owner[0],
@@ -567,21 +598,54 @@ CHECKS = [
 ]
 
 
-def run(root: Path, fail_on: str) -> tuple[list[Finding], Corpus]:
+ALLOW_MARKER = re.compile(
+    r"<!--\s*check:docs:allow\s+(DOC-\d+(?:/\d+)?)\s+(.+?)\s*-->"
+)
+
+
+def allowances(text: str) -> dict[str, str]:
+    """Per-file suppressions declared by the document itself.
+
+    A document that must report a defect has to reproduce the defect, and a
+    string-scanning check cannot tell "this file asserts a stale value" from
+    "this file explains a stale value". Telling them apart by parsing prose is
+    forbidden by ADR-0028 rule 1, so the opt-out is explicit instead: a marker
+    naming the check and a mandatory reason, in the file, visible in review.
+
+    Suppressed findings are still reported, in their own section, so a
+    suppression is never mistaken for a clean result.
+    """
+    out: dict[str, str] = {}
+    for m in ALLOW_MARKER.finditer(text):
+        out[m.group(1)] = m.group(2).strip()
+    return out
+
+
+def run(root: Path, fail_on: str) -> tuple[list[Finding], list[tuple[Finding, str]], Corpus]:
     c = load(root)
     findings: list[Finding] = []
     for _name, fn in CHECKS:
         findings.extend(fn(c))
     findings.sort(key=lambda f: (SEVERITY_ORDER.get(f.severity, 9), f.check, f.path, f.line))
+
+    suppressed: list[tuple[Finding, str]] = []
+    kept: list[Finding] = []
+    for f in findings:
+        src = c.root / f.path
+        reason = allowances(c.text[src]).get(f.check) if src.is_file() else None
+        if reason:
+            suppressed.append((f, reason))
+        else:
+            kept.append(f)
+
     # "none" means report everything unthresholded -- this is the mode used to
     # capture a baseline, so filtering it down to errors would hide exactly
     # the warnings being baselined.
-    if fail_on == "none":
-        return findings, c
-    threshold = SEVERITY_ORDER.get(fail_on)
-    if threshold is None:
-        return findings, c
-    return [f for f in findings if SEVERITY_ORDER.get(f.severity, 9) <= threshold], c
+    if fail_on != "none":
+        threshold = SEVERITY_ORDER.get(fail_on)
+        if threshold is not None:
+            kept = [f for f in kept if SEVERITY_ORDER.get(f.severity, 9) <= threshold]
+    return kept, suppressed, c
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -604,7 +668,7 @@ def main(argv: list[str] | None = None) -> int:
         return 2
 
     try:
-        findings, corpus = run(root, args.fail_on)
+        findings, suppressed, corpus = run(root, args.fail_on)
     except OSError as exc:
         print(f"check_docs: cannot read corpus: {exc}", file=sys.stderr)
         return 2
@@ -618,6 +682,9 @@ def main(argv: list[str] | None = None) -> int:
             "adrs": len(corpus.adrs),
             "failOn": args.fail_on,
             "findings": [f.__dict__ for f in findings],
+            "suppressed": [
+                {"finding": f.__dict__, "reason": r} for f, r in suppressed
+            ],
             "blindSpots": KNOWN_BLIND_SPOTS,
         }, indent=2))
     else:
@@ -627,8 +694,13 @@ def main(argv: list[str] | None = None) -> int:
         else:
             for f in findings:
                 print(f.render())
-            print(f"\n{len(findings)} finding(s); "
-                  f"{len(KNOWN_BLIND_SPOTS)} declared blind spot(s)")
+        if suppressed:
+            print(f"\nsuppressed ({len(suppressed)}) — declared in-document, still visible:")
+            for f, reason in suppressed:
+                print(f"  [suppressed] {f.check} {f.path}:{f.line}")
+                print(f"      reason: {reason}")
+        print(f"\n{len(findings)} finding(s); {len(suppressed)} suppressed; "
+              f"{len(KNOWN_BLIND_SPOTS)} declared blind spot(s)")
 
     if args.fail_on == "none":
         return 0

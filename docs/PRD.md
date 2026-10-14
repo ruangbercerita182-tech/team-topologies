@@ -3,13 +3,14 @@
 | Field | Value |
 |---|---|
 | Document ID | PRD-CMS-001 |
-| Version | 3.0.0 |
+| Version | 3.1.0 |
 | Status | Approved for implementation |
 | Date | 2026-10-14 |
+| Accountable | **Solution Architect** (RACI-CMS-001 §2) |
 | Scope | Repository architecture, engineering standard, and tooling for a CMS product organisation built on Team Topologies |
 | Supersedes | PRD-CMS-001 v2.0.0 |
-| Evidence base | `docs/references.md` (REF-CMS-001 v3.0.0) — 379 admissible references, 77 rejected |
-| Decision records | `docs/adr/` (ADR-0001 … ADR-0012) |
+| Evidence base | `docs/references.md` (REF-CMS-001 v3.1.0) — 405 admissible references, 79 rejected |
+| Decision records | `docs/adr/` (ADR-0001 … ADR-0028) |
 
 ### What changed from v2.0.0, and why
 
@@ -120,11 +121,11 @@ This is the single most important structural difference from v2.0.0, which assum
 
 | ID | Goal | Measurement |
 |---|---|---|
-| G-01 | Every path in the repository has exactly one owning team, and the assignment is generated, not declared twice | `CODEOWNERS` is 100% generated from `catalog/`; `catalog:verify-ownership` exits 0. FR-09, FR-11 |
+| G-01 | Every path in the repository has exactly one owning team, and the assignment is generated, not declared twice | `CODEOWNERS` is 100% generated from `catalog/`; `check:catalog` exits 0. FR-09, FR-11 |
 | G-02 | Boundary violations fail the build, via two independent mechanisms | `turbo boundaries` and `dependency-cruiser` each reject a seeded violation. AC-01, FR-14 |
 | G-03 | A new bounded context is scaffolded without Platform team intervention | Template output compiles and passes `typecheck`, `lint` and `turbo boundaries` with zero manual edits, in ≤ 60 s. FR-12, RES-05 |
 | G-04 | Repository topology is derived from metadata, never hand-maintained in two places | `catalog:generate && git diff --exit-code` is clean. FR-05, FR-10 |
-| G-05 | Build output is reproducible from the commit alone | No floating reference in any build-affecting position; `pins:check` exits 0. FR-21, D-11 |
+| G-05 | Build output is reproducible from the commit alone | No floating reference in any build-affecting position; `check:pins` exits 0. FR-21, D-11 |
 | G-06 | Configuration is validated before the process serves traffic | Every deployable exits non-zero on invalid configuration, before binding a socket. FR-16 |
 | G-07 | The paved road reduces cognitive load measurably | Warm environment activation ≤ 10 s; cold ≤ 300 s. RES-03 |
 | G-08 | The browser payload of any route stays inside a stated budget | PERF-02 … PERF-05 enforced in CI |
@@ -835,7 +836,7 @@ For each client platform with `shell: true`, the generator emits the route map a
 
 **FR-09 — Generated ownership enforcement, total coverage.**
 `CODEOWNERS` and `docs/ownership.md` are emitted from `catalog/teams/*.yaml#spec.owns[]` via §7.2, covering 100 % of tracked paths.
-*Verification:* `catalog:verify-ownership` exits non-zero naming every unmatched path, and naming both teams when two entries cover the same path. On a correct tree it exits zero.
+*Verification:* `check:catalog` exits non-zero naming every unmatched path, and naming both teams when two entries cover the same path. On a correct tree it exits zero.
 
 **FR-10 — Generated-file markers.**
 Every generated file opens with a comment containing the literals `@generated` and `do not edit`.
@@ -885,7 +886,7 @@ Each deployable has a `config.schema.ts` defining its environment contract, vali
 
 **FR-21 — Pinned resolution.**
 No tracked file contains a floating reference in a build-affecting position: no `latest`, no `^`, no unpinned `http(s)://…` in a federation remote, manifest or lockfile reference (D-11). CI must additionally reject the documented Nix pin-defeating flags `--override-input` and `--no-update-lock-file` (R-NIX-03).
-*Verification:* `pins:check` fails on a fixture containing `@latest` and passes on the pinned form. The current tree fails this check; that is the point.
+*Verification:* `check:pins` fails on a fixture containing `@latest` and passes on the pinned form. The current tree fails this check; that is the point.
 
 **FR-22 — Reference bounded-context implementation.**
 `teams/banner/api` implements the §10.2 layers, with `main.ts` as the only place concrete implementations bind to ports — enforced structurally by the "only `main.ts` may import both a port and its adapter" rule.
@@ -1002,7 +1003,7 @@ The single most consequential edge is `teams/banner/client → banner-api`. A do
 | FR-17, FR-18 | devenv + direnv | PH-5 |
 | FR-19, FR-22 | dependency-cruiser layer rules | PH-6 |
 | FR-20 | lint over `teams/platform/authz` | PH-4 |
-| FR-21 | `pins:check` | PH-1 |
+| FR-21 | `check:pins` | PH-1 |
 | FR-23 | OpenAPI + consumer tests | PH-6 |
 | FR-24 | platform CI reuse check | PH-4 |
 | FR-25 | cache-config checker | PH-5 |
@@ -1051,7 +1052,7 @@ Phases are ordered. A phase starts only when the previous phase's exit criterion
 
 ### PH-9 — Relocation to the team-scoped topology
 **Work:** move each deployable under its owning team's directory per §4.1; fold duplicate Module Federation hosts into the single shell; relocate the design system to `teams/platform/ui`; pin all federation remotes (D-11); wire `teams/web/bff` into `teams/web/client`.
-**Exit:** `apps/`, `bff/`, `packages/` and `composition/` do not exist; exactly one Module Federation host exists in the repository; `pins:check` exits zero; `catalog:verify-ownership` exits zero.
+**Exit:** `apps/`, `bff/`, `packages/` and `composition/` do not exist; exactly one Module Federation host exists in the repository; `check:pins` exits zero; `check:catalog` exits zero.
 
 ### PH-10 — Documentation and decision records
 **Work:** `docs/adr/0001`–`0012`; `docs/getting-started.md`; generated `docs/ownership.md`.
@@ -1118,18 +1119,27 @@ Every question raised during design is closed here. A decision is not reopenable
 
 ## 21. Definition of done
 
-v3.0.0 is complete when all of the following are objectively true:
+v3.1.0 is complete when all of the following are objectively true:
 
 1. PH-1 through PH-10 exit criteria all hold.
 2. Every FR-01 … FR-28 verification procedure executes and passes.
 3. Every PERF-01 … PERF-13 threshold is met and measured in CI.
 4. Every RES-01 … RES-10 threshold is met and measured.
 5. Every AC-01 … AC-12 has a named mechanism present in the `check:*` scripts **and** a seeded violation proving it fails.
-6. `catalog:validate && catalog:generate && git diff --exit-code && turbo boundaries && dependency-cruiser` exits zero on a clean tree.
-7. `docs/adr/0001`–`0012` exist and each cites at least one `R-xx` from `docs/references.md`.
+6. `catalog:validate && catalog:generate && git diff --exit-code && turbo boundaries && dependency-cruiser && check:docs` exits zero on a clean tree.
+7. `docs/adr/0001`–`0028` exist and each cites at least one `R-xx` from `docs/references.md`.
 8. No item in §2.2 (non-goals) has been implemented.
 9. `docs/references.md` contains no URL that 404s; §12.3's "honest limits" table is still accurate — any claim added since must have a measurement behind it.
 10. Every SPL-01 … SPL-05 trigger has been evaluated at least once, in writing, and the result recorded.
+11. **Every `TDD.md` §14 `GAP-nn` is closed by an accepted ADR, or appears in this section as an explicitly unresolved entry with a named owner.** A gap that is neither is a defect in this document, not in `TDD.md`.
+12. **Where an accepted ADR supersedes text in this PRD, the ADR wins**, and this PRD carries the amendment at its next version. Superseded text is corrected forward; it is not left in place for the ADR to contradict.
+13. `check:docs` reports no error-severity finding, and **every check it implements has a fixture that makes it fail**, committed in the same change that adds the check.
+
+### 21.1 Why items 11–13 exist
+
+v3.0.0 was written against a twelve-record ADR scope and its ten completion criteria contained no clause for the `GAP-01 … GAP-14` closures. An implementer working this section's own acceptance gate therefore had **no signal that fourteen accepted corrections existed** — three of which change shipped configuration defaults (`MF-4`, `PERF-03`, `externalRuntime`) and one of which invalidates an unpinned snippet in §9. The same defect recurred inside the ADR set itself: the amendment proposed to fix the ADR range named `0026` when the set had already reached `0027`.
+
+Item 11 prevents the first. Item 12 prevents the second by fixing precedence rather than relying on every future correction being written carefully. Item 13 (ADR-0028) is the mechanism: a fact that can be computed from another file has one owner, and every other mention of it is generated or mechanically checked.
 
 ---
 

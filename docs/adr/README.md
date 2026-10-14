@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Owner | **Solution Architect** (RACI-CMS-001 §2, §5) |
-| Status of the set | 27 accepted records; none superseded |
+| Status of the set | 28 accepted records; none superseded |
 | Basis | PRD DEC-01…DEC-24, TDD §14 (GAP-01…GAP-14), `docs/references.md` |
 | Rules | (1) Every ADR cites ≥ 1 `R-xx` from the reference catalogue. (2) A cited URL must never be one of the **rejected** entries. (3) A decision is not reopenable without a superseding ADR. (4) An ADR is a decision about something **expensive to reverse**; if it is not, it belongs in the catalogue, not here. |
 
@@ -49,6 +49,7 @@
 | [0025](0025-no-asynchronous-inter-context-integration.md) | — (decision) | No event streams in v3.0.0; revisiting trigger defined | PH-6 |
 | [0026](0026-generated-dependency-manifests.md) | — (decision) | Package dependency lists are generated from the interface ledger | PH-3 |
 | [0027](0027-phase-sequencing-is-dependency-gated.md) | — (decision) | IMPLEMENTATION-PLAN §3.1: phases gate on declared prerequisites (D-1…D-7), with a closed four-pair overlap set and two hard exclusions | PH-1 |
+| [0028](0028-one-owner-per-derived-fact.md) | — (decision) | Every derived fact has exactly one owner; prose states rules, the model holds values; a check that must parse prose is not a check | PH-1 |
 
 ---
 
@@ -71,10 +72,14 @@
 | DEC-11 (no federation), DEC-13 (Team API not normative) | 0004, 0006 |
 | DEC-17…DEC-19 | 0021, 0026, 0013 |
 | DEC-20…DEC-24 | 0013, 0019, 0020, 0026 |
+| DEC-10 | — **uncovered; see note below** |
 | DEC-21, DEC-22 | 0020, 0012 |
 | PRD §18 (phase ordering) | 0027 |
+| ADR range, §21 completion gate, gate naming, one-owner-per-fact | 0028 |
 
 Every PRD decision maps to at least one ADR. Decisions with **no** ADR are decisions nobody has made deliberately.
+
+**One exception, recorded rather than papered over.** `DEC-10` ("Floating remote versions? Prohibited. Every build-affecting reference is pinned") is claimed by no record. The previous version of this line asserted full coverage; that assertion was false, and the mechanical check `DOC-05` now reports it. Whether `DEC-10` needs its own ADR depends on a judgement this set has not yet made: pinning policy is enforced by `check:pins` and `D-11`, which is strong enforcement on cheap-to-reverse ground (dependency versions are reversible per RES-01), and `README.md` rule 3 says a decision gets an ADR only if it is expensive to reverse. **On that reading `DEC-10` is enforced and does not need one, and the honest fix is to record it here as deliberately ADR-less rather than to manufacture a record to satisfy a coverage count.** If the TL or PM disagrees, the ADR is theirs to demand; SA will write it.
 
 ---
 
@@ -84,7 +89,7 @@ These are PRD amendments this record set requires. They are listed rather than a
 
 | # | Amendment | Reason | Source |
 |---|---|---|---|
-| PR-1 | §21 item 7: `docs/adr/0001–0012` → `0001–0026` | the ADR set grew to cover every TDD correction | ADR README index |
+| PR-1 | §21 item 7: the ADR range written against the original twelve-record scope → the full range | the ADR set grew to cover every TDD correction. **Corrected 2026-10-14:** this row previously read "→ `0001–0026`", which was itself stale — the set had already reached 0027, and now 0028 | ADR README index |
 | PR-2 | §11.3 MF-4 amended: `disableShared` **off**; `disableSnapshot: true` in production; `provideExternalRuntime` on the shell | upstream constraints and the published size table | ADR-0013 |
 | PR-3 | §8.2: add `Interface` and `Budget` kinds; `relations/` becomes derived | one declaration of each fact | ADR-0007, 0026, TDD §8.1 |
 | PR-4 | §7.2: adopt ALG-4 with invariants O-1/O-2 | §7.2 leaves precedence undefined | ADR-0008, 0016 |
