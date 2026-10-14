@@ -31,6 +31,8 @@ GATES = [
      [sys.executable, str(CHECKS / "check_pins.py"), "-C", str(REPO)]),
     ("toolchain (FR-26/FR-27/RES-01)",
      [sys.executable, str(CHECKS / "check_toolchain.py"), "-C", str(REPO)]),
+    ("phase criteria observable",
+     [sys.executable, str(CHECKS / "check_plans.py"), "-C", str(DOCS)]),
     ("generator up to date",
      [sys.executable, str(HERE / "gen_docs.py"), "-C", str(DOCS), "--check"]),
     ("document coherence",

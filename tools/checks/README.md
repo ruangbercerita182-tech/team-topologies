@@ -60,3 +60,25 @@ Two bugs here were only visible because the fixtures ran:
   containing nested repositories.
 - The repository's own `.git` was reported as a nested one once the first bug was
   fixed.
+
+## check_plans — phase criteria must be observable (PH-1 gate)
+
+```sh
+python3 tools/checks/check_plans.py -C docs              # gate: criteria only
+python3 tools/checks/check_plans.py -C docs --report-only  # plus acceptance state
+python3 tools/checks/check_plans.py -C docs --strict       # acceptance also fails
+```
+
+| Rule | Asserts |
+|---|---|
+| PLANS-01 | a phase entry criterion that asserts a state without a command is a finding. PH-1's was the phrase "plan accepted", which has no exit code and cannot be told from an assumed one |
+| PLANS-02 | every entry and exit criterion names a command or a measurable condition |
+| PLANS-03 | reports which artefacts are still `Proposed`. **Reported, not gated** — an unapproved plan does not become correct by failing CI every day, and a permanently-red gate gets switched off. `--strict` makes it gate |
+
+**Acceptance is a signature, not a status this tool can set.** PLANS-03 exists so the
+blocker stays visible. Marking a plan accepted is its accountable role's act; a check that
+did it would be forging a sign-off.
+
+**On this repository it currently fails two rules and passes after fixing them**, because
+all three criteria it found were genuine: PH-1's entry criterion, and two exit criteria
+written as prose ("contracts green", "PERF-02/03 enforced").

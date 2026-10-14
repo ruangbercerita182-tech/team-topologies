@@ -43,14 +43,14 @@ Phases are ordered per PRD §18. Durations are calendar weeks at the staffing ab
 
 | Phase | Weeks | Cumulative | Entry criterion | Exit criterion (abbrev.) | Accountable |
 |---|---|---|---|---|---|
-| **PH-1** Workspace truth | 2 | 2 | plan accepted | one lockfile; no nested `.git`; no duplicate package names; cross-team PR rejected | TL |
+| **PH-1** Workspace truth | 2 | 2 | `check:plans` exits zero: every artefact this phase depends on is approved and every criterion in this table is observable | one lockfile; no nested `.git`; no duplicate package names; cross-team PR rejected | TL |
 | **PH-2** Metadata layer | 3 | 5 | PH-1 exit | `catalog:validate` passes; 4 seeded violations each fail with a precise message | TL |
 | **PH-3** Generator | 3 | 8 | PH-2 exit | `catalog:generate && git diff --exit-code` clean | SA |
 | **PH-4** Scaffolding + platform contracts | 2 | 10 | PH-2 exit | each template yields a unit passing typecheck/lint/boundaries, zero edits | TL |
 | **PH-5** Environment, config, cache | 2 | 12 | PH-1 exit | `devenv up` cold ≤ 300 s, warm ≤ 10 s; invalid env fails before binding | DevOps |
-| **PH-6** Reference context + aggregator | 4 | 16 | PH-3 + PH-4 exit | contracts green; aggregator store-free; **OTel browser instrumentation present** | SA |
+| **PH-6** Reference context + aggregator | 4 | 16 | PH-3 + PH-4 exit | `catalog:generate && git diff --exit-code` clean; `check:contracts` exits zero against the published schemas; `check:bff-purity` exits zero and reports no store, ORM or migration; `check:otel` asserts the browser SDK is present in the built shell bundle | SA |
 | **PH-7** Boundary + shell purity | 2 | 18 | PH-5 exit | all `check:*` pass; 4 seeded violations each fail | SA |
-| **PH-8** Performance + resource | 3 | 21 | PH-6 + PH-7 exit | PERF-02/03 enforced; budgets in CI; dev-server RSS baseline has 3 data points | QA |
+| **PH-8** Performance + resource | 3 | 21 | PH-6 + PH-7 exit | `check:budgets` exits zero with PERF-02 and PERF-03 enforced in CI; `catalog:budget-owners` names an owner for every entry and reports none missing; `tools/measurements/dev-server-rss.jsonl` contains at least 3 lines | QA |
 | **PH-9** Relocation to team-scoped layout | 3 | 24 | PH-1…PH-7 exit | `apps/`, `bff/`, `packages/`, `composition/` gone; one MF host; `check:pins` zero | TL |
 | **PH-10** Documentation + ADRs | 2 | 26 | PH-9 exit | a newcomer completes a local run from docs alone; every ADR in `adr/` cites ≥ 1 `R-xx`; ADR-0027 (sequencing) accepted | SA |
 
@@ -81,9 +81,9 @@ PRD §18 states a phase starts only when the previous phase's exit criterion hol
 | **M2** | Metadata is authoritative | PH-3 | a route added in YAML appears in the shell with no code edit | SA |
 | **M3** | Self-service | PH-4 | a new context scaffolded in ≤ 60 s, passing every check | TL |
 | **M4** | Reproducible environment | PH-5 | `devenv up` from a clean checkout, twice, identically | DevOps |
-| **M5** | Reference vertical slice | PH-6 | banner context + web aggregator, contract-verified, no rules in the BFF | SA |
+| **M5** | Reference vertical slice | PH-6 | banner context + web aggregator, contract-verified, no rules in the BFF | SA | | SA |
 | **M6** | Boundaries are real | PH-7 | four seeded violations, each caught by two independent tools | SA |
-| **M7** | Performance is measured | PH-8 | an oversized route fails CI; `remoteEntry` ≤ 8 KB | QA |
+| **M7** | Performance is measured | PH-8 | an oversized route fails CI; `remoteEntry` ≤ 8 KB | QA | | QA |
 | **M8** | Target topology | PH-9 | exactly one MF host; prohibited directories gone | TL |
 | **M9** | Handover-ready | PH-10 | a new engineer runs the stack from docs with no help | SA |
 
