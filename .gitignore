@@ -6,7 +6,7 @@ __pycache__/
 # programme. Untracked deliberately — confirm before adding.
 .agents/
 
-# check_docs baseline output is generated; regenerate with:
-#   python3 tools/docs/check_docs.py -C docs --fail-on none --format json
-#   > tools/docs/baseline.json
-tools/docs/baseline.json
+# tools/docs/baseline.json is deliberately NOT ignored. It is not generated
+# output: it is the record of which findings were accepted, at which revision,
+# by whom. A tool output is regenerated; a decision is reviewed. Ignoring it
+# meant CI ran with no baseline, and the correct refusal was a hard exit 2.

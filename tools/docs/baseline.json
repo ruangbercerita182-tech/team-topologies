@@ -1,0 +1,7 @@
+{
+  "note": "Known findings at adoption. check_docs fails only on NEW drift. Regenerate with --write-baseline once a finding is genuinely closed.",
+  "sourceRevision": "bef93d5be15b3de7d9489f78eddb237d63d692ab",
+  "findings": [],
+  "reviewedAt": "2026-10-14",
+  "reviewedBy": "documentation owner, at the R-03 enforcement commit"
+}
