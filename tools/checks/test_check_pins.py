@@ -19,14 +19,23 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 
 from check_pins import is_floating, main  # noqa: E402
+from check_toolchain import main as tc_main  # noqa: E402
 
 FIX = HERE / "fixtures"
+TC_FIX = HERE / "fixtures" / "toolchain"
 
 # (fixture dir, expected exit, what the case proves)
 CASES = [
     ("clean", 0, "a fully pinned tree passes"),
     ("floating", 1, "@latest, ^range and a Nix pin-defeating flag are rejected"),
     ("dev-floating", 0, "a floating devDependency is tolerated by default"),
+]
+
+# T-105: FR-26, FR-27, RES-01
+TC_CASES = [
+    ("clean", 0, "one manager, one root lockfile, no nested .git"),
+    ("nested", 1, "a nested lockfile, a nested .git and a second manager are all reported"),
+    ("two-root-locks", 1, "two lockfiles at the root resolve differently"),
 ]
 
 # (spec, expected floating) -- is_floating decides, not the file format
@@ -57,6 +66,17 @@ def main_test() -> int:
         else:
             print(f"  ok    {name:16} exit {rc}  — {why}")
 
+    for name, expect, why in TC_CASES:
+        d = TC_FIX / name
+        if not d.is_dir():
+            failures.append(f"toolchain/{name}: fixture missing")
+            continue
+        rc = tc_main(["-C", str(d)])
+        if rc != expect:
+            failures.append(f"toolchain/{name}: exit {rc}, expected {expect} ({why})")
+        else:
+            print(f"  ok    toolchain/{name:12} exit {rc}  — {why}")
+
     for spec, expect in UNIT:
         got = is_floating(spec) is not None
         if got != expect:
@@ -82,7 +102,7 @@ def main_test() -> int:
         for f in failures:
             print(f"  - {f}")
         return 1
-    print(f"all {len(CASES)} fixtures and {len(UNIT)} unit cases behaved as specified")
+    print(f"all {len(CASES) + len(TC_CASES)} fixtures and {len(UNIT)} unit cases behaved as specified")
     return 0
 
 

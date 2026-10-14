@@ -29,6 +29,8 @@ GATES = [
     ("pin fixtures", [sys.executable, str(CHECKS / "test_check_pins.py")]),
     ("pinned resolution (FR-21)",
      [sys.executable, str(CHECKS / "check_pins.py"), "-C", str(REPO)]),
+    ("toolchain (FR-26/FR-27/RES-01)",
+     [sys.executable, str(CHECKS / "check_toolchain.py"), "-C", str(REPO)]),
     ("generator up to date",
      [sys.executable, str(HERE / "gen_docs.py"), "-C", str(DOCS), "--check"]),
     ("document coherence",

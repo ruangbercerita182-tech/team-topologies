@@ -37,3 +37,26 @@ policy belongs to its upstream.
 intended state: the gate stands before there is anything for it to catch. FR-21's own
 verification text says the current tree failing is the point — which it will do the moment
 a manifest lands.
+
+## check_toolchain — FR-26 / FR-27 / RES-01 (T-105)
+
+One documented package manager, one lockfile at the root, no nested `.git`.
+
+```sh
+python3 tools/checks/check_toolchain.py -C .
+python3 tools/checks/test_check_pins.py     # covers both checks
+```
+
+| Rule | Asserts |
+|---|---|
+| RES-01 | exactly one lockfile, at the root. A manifest tree with no lockfile is a finding; a repository with no package manifests at all is vacuous, not a violation — "exactly one" has nothing to bite on until manifests exist |
+| FR-26 | no nested `.git`. A nested repository is invisible to `CODEOWNERS` and to every review on this one |
+| FR-27 | `README.md` names one package manager and it matches `package.json#packageManager`; another manager may appear only on a line marked as a citation, which is the escape hatch FR-27 itself states |
+
+Two bugs here were only visible because the fixtures ran:
+
+- `.git` was in the skip list, so the walk skipped every nested repository
+  *before* looking at it. FR-26 could not report anything at all, and passed a tree
+  containing nested repositories.
+- The repository's own `.git` was reported as a nested one once the first bug was
+  fixed.
