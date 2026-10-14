@@ -62,6 +62,12 @@ LSC_CASES = [
      ["ana"], None, None, "", [], True),
     ("malformed trailer entry", TWO_TEAMS, ["ana", "bob"], None, None,
      "Owners-Override: !!!!", [], True),
+    # The trailer is asserted once, on the merge commit (PRD 1.4). Nothing here
+    # inspects the branch's individual commits, so an author is never required to
+    # carry it per commit -- which would demand knowing the finished change's
+    # owner set at every step.
+    ("trailer on the merge commit only", TWO_TEAMS, ["ana", "bob"], None, None,
+     "subject: x\n\nOwners-Override: banner, web\n", [], False),
 ]
 
 # (spec, expected floating) -- is_floating decides, not the file format

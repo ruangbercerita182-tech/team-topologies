@@ -92,9 +92,24 @@ The only cross-team edit path. Two legal routes:
 - **(b)** an `Owners-Override` trailer naming every non-owning team touched, plus
   a second approver who is not the author (AC-11).
 
-Route (b) is the Chromium LSC mechanism §1.4 quotes. The trailer is read from the
-commit being checked, so it expires on merge by construction — it cannot outlive
-its change.
+Route (b) is the Chromium LSC mechanism §1.4 quotes.
+
+### Which message carries the trailer
+
+**The merge commit.** §1.4, quoting Chromium: *"The override is recorded in the merge
+commit trailer and expires on merge."* On a repository that squashes, that is the single
+squashed commit — the same message. It is **not** required on each commit in the branch,
+and `check_lsc` never reads the branch's individual commits.
+
+This is not cosmetic. A per-commit requirement would force the author to know, at each
+commit, which teams will ultimately be touched — usually unknowable, because the owner set
+is a property of the finished change rather than of any single step. Chromium's model is
+post-hoc by design: the override is asserted once, on the artefact that carries the whole
+change, and expires with it.
+
+CI should pass `--merge-message-file` populated from the **merge** commit
+(`git log -1 --pretty=%B` run after merge) or the squashed commit's body. Passing the tip
+of a multi-commit branch is passing an ordinary commit, which is not what §1.4 asks for.
 
 **Ownership is resolved by ADR-0008's single rule, not by parsing CODEOWNERS.**
 Every path under `teams/<slug>/` is owned by that slug; everything outside `teams/`
@@ -107,7 +122,7 @@ as cross-team or not — and a check that guessed either way would be a guess.
 
 ```sh
 python3 tools/checks/check_lsc.py -C . --changed a.ts --changed b.tsx
-python3 tools/checks/check_lsc.py -C . --message-file "$(git log -1 --pretty=%B)"
+python3 tools/checks/check_lsc.py -C . --merge-message-file "$(git log -1 --pretty=%B)"
 ```
 
 `--author-team` and `--team-approval` come from CI. An approver login cannot be

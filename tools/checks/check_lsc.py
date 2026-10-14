@@ -23,8 +23,18 @@ Two ways a change can be legal:
       first-class process, and it exists precisely because a hard boundary turns
       into a bottleneck otherwise.
 
-The trailer expires on merge by construction: it is read from the commit being
-checked, so it cannot outlive its change.
+**Which message carries the trailer.** PRD section 1.4, quoting Chromium: *"The
+override is recorded in the merge commit trailer and expires on merge."* So the
+trailer goes on the **merge commit** -- or, on a repository that squashes, on the
+single squashed commit, which is the same message. It is **not** required on each
+commit in the branch, and this check never reads the branch's individual commits.
+
+That distinction is not cosmetic. A trailer required per commit would force the
+author to know, at the moment of each commit, which teams will ultimately be
+touched -- usually unknowable, since the set of touched owners is a property of
+the finished change rather than of any one step. Chromium's model is post-hoc by
+design: the override is asserted once, on the artefact that carries the whole
+change, and expires with it.
 
 Exit codes: 0 clean, 1 rejected, 2 configuration or usage error.
 Standard library only.
@@ -211,10 +221,15 @@ def main(argv: list[str] | None = None) -> int:
                     help="slug of the team proposing the change. When given, teams it already "
                          "owns need no Owners-Override (PRD section 1.4: the override is "
                          "recorded on every NON-owning team touched)")
-    ap.add_argument("--message", help="commit or PR message carrying the trailer; "
-                                      "use --message-file to read it from a file")
-    ap.add_argument("--message-file", metavar="PATH",
-                    help="file holding the commit or PR message (CI writes the commit body here)")
+    ap.add_argument("--merge-message",
+                    help="the MERGE commit message (or the squashed commit's message, which is "
+                         "the same text) carrying the Owners-Override trailer")
+    ap.add_argument("--merge-message-file", metavar="PATH",
+                    help="file holding the merge commit message. CI should pass "
+                         "`git log -1 --pretty=%B` of the merge commit, run after merge, or the "
+                         "squashed commit's body. Do not pass the tip of a multi-commit branch: "
+                         "that is an ordinary commit, not the merge commit, and PRD section 1.4 "
+                         "requires the override on the latter")
     ap.add_argument("--format", default="text", choices=["text", "json"])
     args = ap.parse_args(argv)
 
@@ -234,13 +249,17 @@ def main(argv: list[str] | None = None) -> int:
             return 2
         paths = [p for p in res.stdout.splitlines() if p.strip()]
 
-    message = args.message if args.message is not None else ""
-    if args.message_file:
+    message = args.merge_message or ""
+    if args.merge_message_file:
         try:
-            message = Path(args.message_file).read_text(encoding="utf-8")
+            message = Path(args.merge_message_file).read_text(encoding="utf-8")
         except OSError as exc:
-            print(f"check_lsc: cannot read message file: {exc}", file=sys.stderr)
+            print(f"check_lsc: cannot read merge message file: {exc}", file=sys.stderr)
             return 2
+    if (args.merge_message or args.merge_message_file) and not TRAILER.search(message):
+        print("  note: no Owners-Override trailer in the supplied merge message. "
+              "FR-01 path (a) may still apply if every non-owning team approved.",
+              file=sys.stderr)
 
     d = evaluate(paths, args.approver, args.author, args.author_team, message,
                  args.team_approval, load_teams(root / "catalog"))

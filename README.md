@@ -105,6 +105,12 @@ If your change touches a directory you do not own, it needs either that owner's 
 Owners-Override: web
 ```
 
+The trailer goes on the **merge commit** — or the squashed commit, which is the same
+message — not on each commit in the branch. §1.4 quotes Chromium's rule that *"the override
+is recorded in the merge commit trailer and expires on merge."* A per-commit requirement
+would demand knowing the finished change's owner set at every step, which is usually not
+knowable yet.
+
 `python3 tools/checks/check_lsc.py -C . --changed <path> …` implements the rule branch
 protection cannot express. See [`tools/checks/README.md`](tools/checks/README.md).
 
