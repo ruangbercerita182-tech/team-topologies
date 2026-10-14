@@ -106,7 +106,12 @@ change to this section, not to the generated one.
 
 
 ---
-## Requested changes to `docs/PRD.md` (to be applied as PRD v3.1.0)
+## Requested changes to `docs/PRD.md`
+
+**Applied in PRD v3.1.0:** PR-2 (MF-4 split into MF-4a…MF-4d, PERF-03 reachability stated),
+PR-5 (`.envrc` pinned `source_url` form), plus §21 items 11–13 and the gate naming unification.
+**Not yet applied:** PR-3, PR-4, PR-6, PR-7, PR-8, PR-9. Each is listed below with its source ADR;
+none is disputed and none is blocked.
 
 These are PRD amendments this record set requires. They are listed rather than applied, because the PRD is SA-owned and versioned separately (RACI §2).
 
