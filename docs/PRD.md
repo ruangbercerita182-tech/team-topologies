@@ -976,6 +976,18 @@ Every workspace package declares `outputs` for cacheable tasks (R-BUILD-10). Eve
 No `.git` directory exists below the repository root.
 *Verification:* `find . -mindepth 2 -name .git -not -path './node_modules/*'` returns nothing.
 
+**FR-29 — Rejected references are never cited.**
+No document in this repository may cite a reference entry the catalogue marks `REJECTED`. Naming one in order to forbid it is permitted and is scoped by an in-document marker naming the entry.
+*Verification:* `check:docs` DOC-90 fails on any citation of a REJECTED entry that no marker covers. A substring scan is not sufficient: `references.md` previously stored status as prose, which produced eleven false positives in twelve hits, so the rule was unenforceable and therefore unenforced for as long as that held.
+
+**FR-30 — An artefact declares its own accountable role.**
+Every artefact states its `Accountable` in its own header block. The index reads it; it never overrides it. `RACI.md` §2 rule 1 requires one accountable per artefact, and a rule that can only be verified from the index cannot be verified at all.
+*Verification:* `check:docs` DOC-08 fails when the index names an accountable the artefact does not declare.
+
+**FR-31 — Every identified gap is closed or listed as unresolved.**
+Every `TDD.md` §14 `GAP-nn` is closed by an accepted ADR, or appears as an explicitly unresolved entry with a named owner. A gap that is neither is a defect in the PRD, not in the TDD.
+*Verification:* `check:docs` DOC-06 fails on a GAP claimed by no record. §21 item 11 states the same rule from the completion side.
+
 **FR-27 — Single documented toolchain.**
 `README.md` documents exactly one package manager, matching `package.json#packageManager`. No second package manager appears in any onboarding document except inside a quoted citation.
 *Verification:* repository-wide search for `pnpm`, `npm run`, `yarn` across `*.md` returns matches only on lines marked as citations.

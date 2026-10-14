@@ -117,3 +117,13 @@ python3 tools/docs/test_check_docs.py
 
 Baseline is empty. The gate is green because there is nothing left to carry, not because anything
 is suppressed.
+
+## R-03 enforcement
+
+`TDD.md` §13 stated, in prose, that every gate has a seeded fixture and that *a check without a fixture is a check that has never been observed*. Nothing enforced either clause.
+
+Demonstrated on 2026-10-14: removing `DOC-10` from the `CHECKS` registry, from the fixture suite, and from disk left `run_all` reporting all gates passed. `DOC-10` enforces ADR-0028 rule 1 for duplicate section headings, and it is the check that found the nine duplicated sections in `adr/README.md` during the ADR-index work.
+
+Closed by `tools/checks/check_inventory.py`, wired into `run_all`, with nine fixtures in `tools/checks/test_check_inventory.py`. The same deletion now exits 1 with INV-02 naming the missing registration.
+
+Four defects were found in the new check while building it, each by its own fixtures: the command-to-file map was a hardcoded parallel list; the command cell was parsed as only its backticked part, discarding the check id; a row citing a nonexistent requirement was satisfied by the citation itself, because the corpus included the table being verified; and a check's id was probed by text search, which a deleted check satisfies while its own function body remains in the file. The last of these is the general hazard — an audit that reads its own claim as evidence for that claim is a rubber stamp, not a check.

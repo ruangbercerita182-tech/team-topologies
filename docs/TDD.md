@@ -352,8 +352,8 @@ This refines PRD §7.1. It adds the two columns that make the table *enforceable
 | 7 | `<client>-bff` | HTTP API | owning client team | **that client platform only** | OpenAPI 3.1 | free | **runtime**: D-09 session attestation |
 | 8 | runtime config schema | package | each deployable's team | platform (value emitter) | `config.schema.ts` | strict boot failure | AC-09 |
 | 9 | generated topology artefacts | package/files | platform (generator) | every consumer | generated file + `@generated` marker | regenerate only | **D1 byte-stability + FR-05 diff gate** |
-| 10 | **package dependency lists** | manifest | platform (generator) | the package manager | `package.json#dependencies` | regenerate only | makes "undeclared dependency" structurally impossible |
-| 11 | **budget ledger** | metadata | each budget's owner | platform (aggregator), CI (gate) | `catalog/budgets.yaml` | ADR per change | CHK-19 |
+| 10 | **package dependency lists** | manifest | platform (generator) | the package manager | `package.json#dependencies` | regenerate only | makes "undeclared dependency" structurally impossible
+| 11 | **budget ledger** | metadata | each budget's owner | platform (aggregator), CI (gate) | `catalog/budgets.yaml` | ADR per change | CHK-19
 
 **ROW-10 is a structural change with a large payoff.** If `package.json` `dependencies`/`devDependencies` are *generated from the catalog's relation rows*, then:
 
@@ -672,29 +672,49 @@ A design that cannot say when a component should be **removed** has not decided 
 
 Every gate is named, has an exit code, and has a **seeded violation fixture** that proves it fails. A check without a fixture is a check that has never been observed to work (PRD §21 item 5).
 
-| CHK | Command | Input | Fails on | Seeded fixture |
-|---|---|---|---|---|
-| 01 | `check:catalog` | `catalog/**` | FR-02/03/04/06/07/13, D-04 route rules, O-1/O-2 | unknown key; dangling relation; two aggregators; `direct` route with 2 contexts |
-| 02 | `check:ownership` | git index + catalog | ALG-4: uncovered path, overlap, intrusion | a team doc claiming `teams/other/**` |
-| 03 | `check:relations` | catalog + manifests + source | ALG-5: undeclared, smuggled, undeclared co-ownership | an import of a package not in the generated manifest |
-| 04 | `check:boundaries` | package graph | AC-01, AC-02 (Turbo tags) | cross-team import |
-| 05 | `check:layers` | file graph | AC-08, D-10, D-14 | `domain/` importing `@nestjs/common` |
-| 06 | `check:bff-purity` | file graph + deps | AC-03, T1 | `bff/` importing `pg` |
-| 07 | `check:shell-purity` | file graph + vocabulary | AC-05, AC-06, ALG-1 | a shell module exporting `Banner` |
-| 08 | `check:generated-fresh` | generator | FR-05, FR-10, D1 | a hand-edited generated file |
-| 09 | `check:pins` | tracked text | FR-21, D-11 | `@latest` in a manifest |
-| 10 | `check:tasks` | `turbo.json` + manifests | FR-28 (no vacuous pass) | a task resolving to zero packages |
-| 11 | `check:repo-shape` | filesystem | AC-10, FR-26 | a nested `.git` |
-| 12 | `check:lsc` | PR metadata | FR-01, AC-11 | a cross-team PR without `Owners-Override` |
-| 13 | `check:authz-placement` | routes + source | AC-12, D-13 (§14 GAP-13) | a BC route with no authorisation evaluation and no `public: true` |
-| 14 | `check:config-strict` | deployable boot | AC-09, FR-16 | an unknown env key |
-| 15 | `check:contracts` | published schemas + consumer tests | FR-23 | an adapter expectation diverging from the provider |
-| 16 | `check:deps-duplicate` | federation manifests | BUD-07 | a remote bundling a shared singleton |
-| 17 | `perf:budgets` | built artefacts | PERF-02/03, BUD-06/08 | a deliberately oversized route |
-| 18 | `res:timings` | timings | RES-05, RES-05a, RES-06 | n/a (measurement) |
-| 19 | `check:budgets` | `catalog/budgets.yaml` | BUD schema validity | a budget with no `gate` |
-| 20 | `perf:runtime` | in-process metrics | PERF-06/09/10 | a retry storm |
-| 21 | `res:telemetry` | CI + cloud | RES-06, RES-08, RES-10 | n/a (measurement) |
+| CHK | Command | Input | Fails on | Seeded fixture | Status |
+|---|---|---|---|---|---|
+| 01 | `check:catalog` | `catalog/**` | FR-02/03/04/06/07/13, D-04 route rules, O-1/O-2 | unknown key; dangling relation; two aggregators; `direct` route with 2 contexts | Planned |
+| 02 | `check:ownership` | git index + catalog | ALG-4: uncovered path, overlap, intrusion | a team doc claiming `teams/other/**` | Planned |
+| 03 | `check:relations` | catalog + manifests + source | ALG-5: undeclared, smuggled, undeclared co-ownership | an import of a package not in the generated manifest | Planned |
+| 04 | `check:boundaries` | package graph | AC-01, AC-02 (Turbo tags) | cross-team import | Planned |
+| 05 | `check:layers` | file graph | AC-08, D-10, D-14 | `domain/` importing `@nestjs/common` | Planned |
+| 06 | `check:bff-purity` | file graph + deps | AC-03, T1 | `bff/` importing `pg` | Planned |
+| 07 | `check:shell-purity` | file graph + vocabulary | AC-05, AC-06, ALG-1 | a shell module exporting `Banner` | Planned |
+| 08 | `check:generated-fresh` | generator | FR-05, FR-10, D1 | a hand-edited generated file | Planned |
+| 09 | `check:pins` | tracked text | FR-21, D-11 | `@latest` in a manifest | Built |
+| 10 | `check:tasks` | `turbo.json` + manifests | FR-28 (no vacuous pass) | a task resolving to zero packages | Planned |
+| 11 | `check:repo-shape` | filesystem | AC-10, FR-26 | a nested `.git` | Planned |
+| 12 | `check:lsc` | PR metadata | FR-01, AC-11 | a cross-team PR without `Owners-Override` | Built |
+| 13 | `check:authz-placement` | routes + source | AC-12, D-13 (§14 GAP-13) | a BC route with no authorisation evaluation and no `public: true` | Planned |
+| 14 | `check:config-strict` | deployable boot | AC-09, FR-16 | an unknown env key | Planned |
+| 15 | `check:contracts` | published schemas + consumer tests | FR-23 | an adapter expectation diverging from the provider | Planned |
+| 16 | `check:deps-duplicate` | federation manifests | BUD-07 | a remote bundling a shared singleton | Planned |
+| 17 | `perf:budgets` | built artefacts | PERF-02/03, BUD-06/08 | a deliberately oversized route | Planned |
+| 18 | `res:timings` | timings | RES-05, RES-05a, RES-06 | n/a (measurement) | Planned |
+| 19 | `check:budgets` | `catalog/budgets.yaml` | BUD schema validity | a budget with no `gate` | Planned |
+| 20 | `perf:runtime` | in-process metrics | PERF-06/09/10 | a retry storm | Planned |
+| 21 | `res:telemetry` | CI + cloud | RES-06, RES-08, RES-10 | n/a (measurement) | Planned |
+| 22 | `check:docs` DOC-01 | `docs/**` | ADR-0028 rule 1 | a cited `R-xx` absent from `references.md` | Built |
+| 23 | `check:docs` DOC-02/03 | `docs/**` | ADR-0028 rule 1 | a link to a file that does not exist; a link to a heading that does not exist | Built |
+| 24 | `check:docs` DOC-04 | `docs/**` | ADR-0028 rule 1 | a header claiming twelve ADR records where twenty-nine exist | Built |
+| 25 | `check:docs` DOC-05 | `docs/**` + `adr/` | ADR-0028 rule 1; ADR-0013 rule 2 | a PRD decision claimed by neither the generated nor the authored traceability | Built |
+| 26 | `check:docs` DOC-06 | `TDD.md` + `adr/` | FR-31, PRD §21 item 11 | a §14 GAP closed by no record | Built |
+| 27 | `check:docs` DOC-07 | `docs/**` | ADR-0028 rule 3; FR-21 | two different spellings naming one gate | Built |
+| 28 | `check:docs` DOC-08 | `docs/**` | FR-30, RACI §2 rule 1 | an artefact index cell disagreeing with that artefact's own header | Built |
+| 29 | `check:docs` DOC-10 | `docs/**` | ADR-0028 rule 1 | a duplicated section heading | Built |
+| 30 | `check:docs` DOC-90 | `docs/**` + catalogue | FR-29, `adr/README.md` rule 2 | a record citing a REJECTED reference | Built |
+| 31 | `check:docs` DOC-91 | `docs/**` | ADR-0028 rule 1 | a version cross-reference contradicting the artefact's declared version | Built |
+| 32 | `check:toolchain` | repository root | FR-26, FR-27, RES-01 | a lockfile below the root; a nested `.git`; a second package manager in `README.md` | Built |
+| 33 | `check:plans` | `docs/IMPLEMENTATION-PLAN.md` | IMPLEMENTATION-PLAN R-4 | the phrase `plan accepted` as a phase entry criterion | Built |
+| 34 | `gen_docs --check` | `docs/` | ADR-0006, ADR-0028 | a hand-edited generated index; a generated block in the wrong section | Built |
+| 35 | `check:inventory` | `TDD.md` §13, `run_all.py`, fixtures | R-03, IMPLEMENTATION-PLAN R-4 | a gate that `run_all` executes and §13 does not name; a fixture no suite asserts | Built |
+
+**Enforcement of the inventory (CHK-35).** `check:inventory` holds this table to its own text. INV-01, a gate `run_all` executes and this section does not name. INV-02, a row marked `Built` whose check id is absent from its file's `CHECKS` registry, read from the AST rather than by text search. INV-03, a fixture directory no suite asserts. INV-04, a gate whose *Fails on* column cites no requirement, or one that exists in no document. INV-05, a check registered in code that this section does not name.
+
+Build state is declared, not inferred. Inference cannot tell a gate planned for a later phase from one built and then deleted, and that ambiguity is exactly what let `DOC-10` be removed from its registry, its fixture suite and the disk while `run_all` stayed green. `DOC-10` was the check that found nine duplicated sections in `adr/README.md`.
+
+**What the enforcement does not do.** It does not make deletion impossible. Whoever can edit the gates can edit this table and the check itself. It raises the cost of a silent deletion from one edit in one file to several coordinated edits across the implementation, its suite, and a normative design document, and it turns an unenforced gate into a red build. That is the honest limit of an audit performed by the thing it audits.
 
 **Exit-code discipline.** Every `check:*` exits 0 or 1 on a judgement, and 2 on an internal failure. A pipeline must treat 2 as failure.
 
