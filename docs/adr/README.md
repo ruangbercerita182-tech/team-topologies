@@ -112,8 +112,9 @@ change to this section, not to the generated one.
 
 **Applied in PRD v3.1.0:** PR-2 (MF-4 split into MF-4a…MF-4d, PERF-03 reachability stated),
 PR-5 (`.envrc` pinned `source_url` form), PR-8 (DEC-25), PR-9 (§18 prerequisite-gating, the closed
-overlap set and the two hard exclusions), plus §21 items 11–13 and the gate naming unification.
-**Not yet applied:** PR-3, PR-4, PR-6, PR-7. Each is listed below with its source ADR; none is
+overlap set and the two hard exclusions), PR-7 (`route.dataStrategy`, FR-13),
+PR-4 (§7.2 ordering, ALG-4 invariants O-1/O-2), plus §21 items 11–13 and the gate naming unification.
+**Not yet applied:** PR-3, PR-6. Each is listed below with its source ADR; none is
 disputed and none is blocked.
 
 PR-9 was the sharpest of the nine. §18 still said *"a phase starts only when the previous
