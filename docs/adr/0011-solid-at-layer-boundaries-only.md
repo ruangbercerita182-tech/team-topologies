@@ -1,3 +1,5 @@
+<!-- check:docs:allow DOC-90 R-SOLID-09 — marked REJECTED inline, in order to forbid citing it. -->
+
 # ADR-0011 — SOLID is applied at layer boundaries only
 
 - **Status:** Accepted · **Date:** 2026-10-14 · **Decider:** Solution Architect · **Gate:** PH-7

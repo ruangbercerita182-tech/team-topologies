@@ -1,3 +1,5 @@
+<!-- check:docs:allow DOC-90 R-SOLID-09, R-SEC-01, R-BND-11, R-BE-22, R-MFE-21, R-MFE-22, R-MFE-23 — quoted from the audit that established why this check was previously unshippable, and to report the violations in sections 5 and 5.1. -->
+
 # SA referrals — items outside Solution Architect accountability
 
 | Field | Value |
@@ -76,7 +78,42 @@ that rule forbids. Resolved unilaterally as SA by assigning **Technical Lead** (
 SA's directional ownership of §1–§23 as content ownership, not accountability. **Please
 confirm.**
 
-## 5. Deferred by the SA, with the reason on the record
+## 5. Two live rule-2 violations in accepted ADRs — SA cannot close these
+
+`DOC-90` became enforceable on 2026-10-14 once `references.md` carried status as a field.
+It immediately found **two real violations of `adr/README.md` rule 2** — a record citing a
+`REJECTED` reference:
+
+| Record | Line | Cited | What the catalogue says |
+|---|---|---|---|
+| ADR-0012 | 23 | `R-BND-11` | *Turborepo has no boundaries* — REJECTED as a citation target. The claim is true, but no positive Turborepo citation exists; assert it uncited |
+| ADR-0017 | 26 | `R-BND-11` | the same entry, unmarked in the reference list |
+
+**Baselined, not fixed — a deliberate non-decision.** Both are accepted records and
+`README.md` rule 4 forbids editing them; a correction lands as a superseding record.
+Writing one is a real decision, so it is recorded here rather than made silently in a
+remediation commit. The choice is **supersede** (drop `R-BND-11` and assert uncited, per
+the catalogue's own instruction) or **accept** (a scoped `check:docs:allow DOC-90` marker
+per record, on the grounds that the rejected claim is the claim being made). The first is
+almost certainly right. **SA will write the superseding record on request; it is not
+written here because the decision is which of the two applies, and that has not been made.**
+
+### 5.1 Seven entries were inside range expressions in PRD §22
+
+| Range as written | Rejected inside it | Admissible bound |
+|---|---|---|
+| `R-MFE-01 … R-MFE-23` | R-MFE-21, R-MFE-22, R-MFE-23 | R-MFE-20 |
+| `R-BE-01 … R-BE-22` | R-BE-22 | R-BE-21 |
+| `R-BND-01 … R-BND-11` | R-BND-11 | R-BND-10 |
+
+**Fixed in PRD v3.1.0** — PRD is SA-owned. `DOC-90` now expands range expressions, because
+without expansion the check misses exactly this case: only the upper bound is written out,
+the rejected entries in the middle are not. Range handling has now been missed three times
+in `check_docs.py` — `DOC-04`, `DOC-05`, `DOC-90` — and carries a fixture each time.
+
+---
+
+## 6. Deferred by the SA, with the reason on the record
 
 **`DEC-10` has no ADR.** `DEC-10` ("Floating remote versions? Prohibited") is claimed by no
 record, while `adr/README.md` asserted full DEC coverage. That assertion was false and
@@ -89,7 +126,18 @@ count would be the wrong fix, so `adr/README.md` now records `DEC-10` as deliber
 ADR-less. **If the TL or PM judges that pinning policy is expensive to reverse, the ADR is
 theirs to demand and SA will write it.**
 
-## 6. Not fixable with the data as it stands
+## 7. What changed on 2026-10-14 — DOC-90 is no longer blocked
+
+The section below previously said the rejected-citation rule was unenforceable
+because `references.md` stored status as prose. **That is closed.** All 416
+reference rows now carry a `Status` field; the migration left 381 VERIFIED, 24
+PARTIAL and 11 REJECTED, which matches the catalogue's own arithmetic exactly
+(its preamble already asserted that every reference was retrieved and read, so a
+row with no explicit marker was recorded as that assertion, not as a new claim).
+
+`DOC-90` shipped the same day and is enforced in CI. One blind spot remains:
+
+---
 
 `references.md` encodes reference status as prose inside a free-text column rather than as a
 field, so the rule at `adr/README.md` rule 2 — *no record may cite a rejected reference* —

@@ -1,3 +1,5 @@
+<!-- check:docs:allow DOC-90 derived from each record's References section; a record may name a rejected entry to forbid it -->
+
 # Architecture Decision Records
 
 | Field | Value |

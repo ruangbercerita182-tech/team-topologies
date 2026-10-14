@@ -34,21 +34,6 @@ SEVERITY_ORDER = {"error": 0, "warning": 1, "info": 2}
 # the absence is a decision on the record, not an oversight.
 KNOWN_BLIND_SPOTS = [
     {
-        "id": "DOC-90",
-        "wanted": "flag an ADR that cites a REJECTED reference entry",
-        "why_not": (
-            "references.md encodes status as prose inside a free-text column, "
-            "not as a field. A substring scan for 'REJECTED' produced 12 hits, "
-            "of which 11 were false positives: R-SOLID-09 is cited in PRD.md:664 "
-            "and adr/0011:21 precisely to say it must never be cited, and "
-            "R-SEC-01 is VERIFIED while its row merely mentions the word "
-            "'REJECTED' in prose ('already listed as REJECTED in R-23'). "
-            "Until status becomes a machine-readable field this check cannot "
-            "be made sound, and a noisy gate gets switched off."
-        ),
-        "unblocks": "make reference status a field (ADR-0028 / references.md schema)",
-    },
-    {
         "id": "DOC-91",
         "wanted": "detect the same fact stated with two different values",
         "why_not": (
@@ -623,6 +608,82 @@ def doc_08_artefact_index(c: Corpus) -> list[Finding]:
     return out
 
 
+def doc_90_rejected_citation(c: Corpus) -> list[Finding]:
+    """No document may cite a REJECTED reference entry.
+
+    This is rule 2 of the ADR set and was unenforceable until
+    references.md carried status as a field rather than as prose inside the
+    "Establishes" column. The earlier substring scan produced 12 hits of which
+    11 were false positives -- R-SOLID-09 is named in PRD.md and adr/0011
+    precisely to forbid citing it, and R-SEC-01 is VERIFIED while its row
+    mentions the word "REJECTED" in passing.
+
+    Reading the Status column fixes the second case. The first case is a
+    genuine, legitimate citation of a rejected entry, and is declared with the
+    same in-document marker as any other suppression: a name and a reason.
+    """
+    cat = c.root / "references.md"
+    if not cat.exists():
+        return [Finding("DOC-90", "error", "references.md", 0,
+                        "catalogue missing; rejected-citation rule cannot be checked")]
+
+    status: dict[str, str] = {}
+    for i, line in enumerate(c.text[cat].splitlines(), 1):
+        if not line.startswith("|"):
+            continue
+        cells = [x.strip().replace("*", "").replace("`", "") for x in line.strip("|").split("|")]
+        if len(cells) < 6 or not re.fullmatch(r"R-[A-Z]+-\d+", cells[0]):
+            continue
+        st = cells[4].upper()
+        if st in ("VERIFIED", "PARTIAL", "REJECTED"):
+            status[cells[0]] = st
+
+    if not status:
+        return [Finding("DOC-90", "error", "references.md", 0,
+                        "no reference row carries a machine-readable Status; "
+                        "the rejected-citation rule is unenforceable")]
+
+    rejected = {r for r, s in status.items() if s == "REJECTED"}
+
+    out: list[Finding] = []
+    for p in c.files:
+        if p == cat:
+            continue
+        allowed = allowances(c.text[p]).get("DOC-90")
+        if allowed is not None and allowed.ids is None:
+            continue  # unscoped: the whole file declares it reports rejected ids
+        allowed_ids = allowed.ids if allowed else set()
+        for i, line in enumerate(c.text[p].splitlines(), 1):
+            for rid in (_refs_including_ranges(line) & rejected):
+                if rid in allowed_ids:
+                    continue
+                out.append(Finding(
+                    "DOC-90", "error", rel(c, p), i,
+                    f"cites {rid}, which the catalogue marks REJECTED",
+                    line.strip()[:160],
+                ))
+    return out
+
+
+def _refs_including_ranges(line: str) -> set[str]:
+    """R-ids a line cites, expanding 'R-BND-01 … R-BND-11' shorthand.
+
+    Without expansion the check misses precisely the case that produced the
+    original defect: PRD section 22 cited 'R-MFE-01 … R-MFE-23' with only the
+    upper bound written out, so three rejected entries inside the range were
+    never seen. Range handling has now been missed three times in this file --
+    DOC-04, DOC-05 and now DOC-90 -- and is covered by fixtures each time.
+    """
+    found: set[str] = set()
+    for m in re.finditer(r"\b(R-[A-Z]+-)(\d+)\s*(?:…|\.\.\.|–|-)\s*(R-[A-Z]+-)(\d+)\b", line):
+        pre1, n1, pre2, n2 = m.group(1), int(m.group(2)), m.group(3), int(m.group(4))
+        if pre1 != pre2 or not (0 <= n2 - n1 <= 256):
+            continue
+        found |= {f"{pre1}{n:02d}" for n in range(n1, n2 + 1)}
+    found |= set(re.findall(r"\bR-[A-Z]+-\d+\b", line))
+    return found
+
+
 CHECKS = [
     ("DOC-01", doc_01_references),
     ("DOC-02/03", doc_02_03_links),
@@ -631,6 +692,7 @@ CHECKS = [
     ("DOC-06", doc_06_gap_closure),
     ("DOC-07", doc_07_gate_names),
     ("DOC-08", doc_08_artefact_index),
+    ("DOC-90", doc_90_rejected_citation),
 ]
 
 
@@ -639,7 +701,25 @@ ALLOW_MARKER = re.compile(
 )
 
 
-def allowances(text: str) -> dict[str, str]:
+class Allowance:
+    """A declared suppression: a reason, and optionally the ids it covers.
+
+    Scoping matters. An unscoped marker silences every finding of that check in
+    the file, which means the first legitimate non-citation in a large document
+    disables the check for that document permanently -- including violations
+    added later. Naming the ids keeps new ones failing.
+    """
+
+    __slots__ = ("check", "reason", "ids")
+
+    def __init__(self, check: str, reason: str) -> None:
+        self.check = check
+        self.reason = reason
+        ids = set(re.findall(r"\bR-[A-Z]+-\d+\b", reason))
+        self.ids = ids or None
+
+
+def allowances(text: str) -> dict[str, Allowance]:
     """Per-file suppressions declared by the document itself.
 
     A document that must report a defect has to reproduce the defect, and a
@@ -651,9 +731,9 @@ def allowances(text: str) -> dict[str, str]:
     Suppressed findings are still reported, in their own section, so a
     suppression is never mistaken for a clean result.
     """
-    out: dict[str, str] = {}
+    out: dict[str, Allowance] = {}
     for m in ALLOW_MARKER.finditer(text):
-        out[m.group(1)] = m.group(2).strip()
+        out[m.group(1)] = Allowance(m.group(1), m.group(2).strip())
     return out
 
 
@@ -668,9 +748,14 @@ def run(root: Path, fail_on: str) -> tuple[list[Finding], list[tuple[Finding, st
     kept: list[Finding] = []
     for f in findings:
         src = c.root / f.path
-        reason = allowances(c.text[src]).get(f.check) if src.is_file() else None
-        if reason:
-            suppressed.append((f, reason))
+        marker = allowances(c.text[src]).get(f.check) if src.is_file() else None
+        # An unscoped marker silences the check for the whole file and is
+        # applied generically. A scoped marker names specific ids and belongs
+        # to the check that understands those ids -- applying it generically
+        # would suppress findings the check deliberately let through, which is
+        # how a scoped marker silently became a whole-file opt-out.
+        if marker is not None and marker.ids is None:
+            suppressed.append((f, marker.reason))
         else:
             kept.append(f)
 

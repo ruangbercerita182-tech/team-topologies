@@ -1,5 +1,7 @@
 <!-- check:docs:allow DOC-04 This record quotes the stale ADR range and gate spellings in order to explain them. Rule 1 below forbids the check from distinguishing "asserts a stale value" from "describes a stale value" by parsing prose, so the opt-out is explicit and lives in this file. -->
 
+<!-- check:docs:allow DOC-90 R-SOLID-09, R-SEC-01 — the two false positives that made rule 1 necessary. -->
+
 # ADR-0028 — Every derived fact has one owner; prose states rules, the model holds values
 
 - **Status:** Accepted · **Date:** 2026-10-14 · **Decider:** Solution Architect · **Gate:** PH-1 (programme-level)

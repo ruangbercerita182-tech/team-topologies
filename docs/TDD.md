@@ -1,3 +1,5 @@
+<!-- check:docs:allow DOC-90 R-SOLID-09, R-MONO-09 — named only to record that the PRD's rejections are maintained honestly. -->
+
 # TDD — Technical Design for PRD-CMS-001
 
 | Field | Value |

@@ -1,3 +1,5 @@
+<!-- check:docs:allow DOC-90 R-SOLID-09, R-MONO-09, R-BUILD-19, R-BUILD-40, R-MFE-21, R-MFE-22, R-MFE-23, R-BE-22, R-BND-11 — named only to state that no citable source exists or that the entry is rejected. Seven of these were inside range expressions in this section until v3.1.0, which was itself a rule-2 violation. -->
+
 # PRD — CMS Platform Architecture
 
 | Field | Value |
@@ -1158,7 +1160,7 @@ The complete, fetch-verified catalogue is `docs/references.md` (REF-CMS-001 v3.0
 | Monorepo adoption data (and its limits) | R-MONO-44 |
 | Bounded context, aggregate, ubiquitous language, context map | R-DDD-01 … R-DDD-04 |
 | SOLID, primary sources | R-SOLID-01 … R-SOLID-08, R-SOLID-10 |
-| **Rejected: "Solid Considered a Harmful"** | R-SOLID-09 |
+| **Rejected and never citable** | R-SOLID-09 · R-MONO-09 · R-MFE-21 · R-MFE-22 · R-MFE-23 · R-BE-22 · R-BND-11 · R-BUILD-19 · R-BUILD-40 |
 | Clean Architecture, hexagonal, layering | R-CA-01 … R-CA-06 |
 | Metadata-driven composition, catalog, relations, OpenAPI/AsyncAPI | R-META-01 … R-META-25 |
 | Developer environment (devenv, Nix, direnv, alternatives) | R-DV-01 … R-DV-14, R-NIX-01 … R-NIX-08, R-DIR-01 … R-DIR-09 |
@@ -1167,12 +1169,12 @@ The complete, fetch-verified catalogue is `docs/references.md` (REF-CMS-001 v3.0
 | GraphQL federation (recorded, not adopted) | R-AGGR-01 … R-AGGR-11 |
 | Contract testing and provider/consumer contracts | R-CDC-01 … R-CDC-10 |
 | Resilience, caching, aggregation latency, N+1 | R-RES-01 … R-RES-28 |
-| Micro-frontends, container application, anti-patterns, security | R-MFE-01 … R-MFE-23 |
+| Micro-frontends, container application, anti-patterns, security | R-MFE-01 … R-MFE-20 (R-MFE-21, R-MFE-22 and R-MFE-23 are rejected) |
 | Module Federation configuration and its performance numbers | R-MF-01 … R-MF-20 |
 | Web performance budgets and metrics | R-PERF-01 … R-PERF-23 |
-| Backend resource efficiency (Node.js, NestJS) | R-BE-01 … R-BE-22 |
+| Backend resource efficiency (Node.js, NestJS) | R-BE-01 … R-BE-21 (R-BE-22 is rejected) |
 | Build and CI resource efficiency | R-BUILD-01 … R-BUILD-44 |
-| Boundary enforcement | R-BND-01 … R-BND-11 |
+| Boundary enforcement | R-BND-01 … R-BND-10 (R-BND-11 is rejected) |
 | Configuration validation | R-CFG-01 … R-CFG-04 |
 | Ownership and governance | R-OWN-01 … R-OWN-06 |
 | Cost allocation and runtime resource management | R-COST-01 … R-COST-09 |

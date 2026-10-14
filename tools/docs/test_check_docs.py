@@ -40,6 +40,9 @@ CASES = [
     ("doc09-suppressed",       None,      None),
     ("doc05-range-authored",   None,      None),
     ("doc05-uncovered-both",   "DOC-05",  "warning"),
+    ("doc90-rejected-in-range", "DOC-90",  "error"),
+    ("doc90-scoped-allow",     None,      None),
+    ("doc90-scope-missed",     "DOC-90",  "error"),
 ]
 
 
