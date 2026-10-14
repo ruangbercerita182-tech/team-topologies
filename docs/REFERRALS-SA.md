@@ -52,12 +52,25 @@ Shipping the check immediately found items 5 and 5.1. That is the argument for c
 spot rather than documenting it: the two blind spots declared at ADR-0028 were a statement of what
 was missing, and filling one of them produced five findings the corpus did not know it had.
 
-## What is still not mine to close
+## 7. Closed: the last blind spot
 
-`DOC-91` — detecting the same fact stated with two different values — remains the single declared
-blind spot. It needs the fact to be *keyed*: named by something other than the sentence that states
-it. ADR-0028's Tier A identifies which facts qualify, but nothing yet keys them, so a check would
-have to compare prose it cannot parse. Same reasoning as rule 1, and the same conclusion.
+`DOC-91` — detecting the same fact stated with two different values — was declared a blind spot
+because nothing named which fact a sentence was *about*. The facts are keyed now: every artefact
+declares its own `Document ID`, `Version`, `Status` and `Accountable` in a `| Field | Value |` block,
+every ADR carries `Gate` and `Closes` as labelled fields, and every reference row carries `Status`.
+
+`DOC-91` covers version cross-references. A reference to `X vN.N.N` is a claim about X's *current*
+version — except inside a `Supersedes` row, where naming an older version is the entire point. That
+distinction is made by the field name, not by reading the sentence, so the check stays sound under
+ADR-0028 rule 1.
+
+Shipping it found four stale cross-references that no other check could see, including the PRD
+describing its own evidence base as 379 admissible references when the catalogue held 405. Adopting
+it also required a rule change: a superseding record may now retire the file it supersedes, so a
+retired artefact's header no longer has to be current.
+
+**No blind spots remain declared.** That is not the same as having none — it means the ones we
+could name are closed, and the ones we cannot name yet are the ones nobody has been bitten by.
 
 ## Re-run
 

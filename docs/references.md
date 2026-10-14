@@ -10,7 +10,7 @@
 | Supersedes | REF-CMS-001 v1.0.0 (carried ~150 refs) |
 | Consumed by | `docs/PRD.md` (PRD-CMS-001 v3.1.0) |
 | Total references | 405 admissible (381 clean VERIFIED + 24 PARTIAL with a stated limitation) — 379 as of v3.0.0, +24 added by §R-25 for TDD-CMS-001, +2 added by §R-26 for ADR-0028 |
-| Consumed also by | `docs/TDD.md` (TDD-CMS-001 v1.0.0) |
+| Consumed also by | `docs/TDD.md` (TDD-CMS-001 v1.1.0) |
 | Rejected (never cite) | 79 (66 in the R-23 table + 11 carried as numbered R-xx entries + 2 rejected at the ADR-0028 verification step) |
 
 > **Section index.** R-1 Team Topologies · R-2 DDD · R-3 SOLID · R-4 Clean Architecture · R-5 Repository topology · R-6 Metadata · R-7 Dev environment · R-8 Aggregator/BFF · R-9 GraphQL federation · R-10 Contracts · R-11 Resilience · R-12 Micro-frontends · R-13 Module Federation · R-14 Web perf budgets · R-15 Backend efficiency · R-16 Build/CI efficiency · R-17 Boundary enforcement · R-18 Configuration · R-19 Ownership · R-20 Cost allocation · R-21 BFF boundary · R-22 Platform-scope policy · R-23 Rejected · R-24 Maintenance · R-25 Addendum (TDD-CMS-001) · **R-26 Addendum (ADR-0028)**.

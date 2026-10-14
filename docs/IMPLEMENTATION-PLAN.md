@@ -7,7 +7,7 @@
 | Status | Proposed |
 | Date | 2026-10-14 |
 | Accountable | **Project Manager** (RACI-CMS-001 §2) |
-| Basis | PRD-CMS-001 v3.0.0 §18 (phases), §19 (risks), TDD-CMS-001, RACI-CMS-001 |
+| Basis | PRD-CMS-001 v3.1.0 §18 (phases), §19 (risks), TDD-CMS-001, RACI-CMS-001 |
 | Companion | `TECHNICAL-IMPLEMENTATION-PLAN.md` (TL), `TEST-PLAN.md` (QA), `DEPLOYMENT-PLAN.md` (DevOps), `adr/` (SA) |
 
 ---

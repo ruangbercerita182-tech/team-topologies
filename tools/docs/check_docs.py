@@ -33,16 +33,6 @@ SEVERITY_ORDER = {"error": 0, "warning": 1, "info": 2}
 # Checks that sound plausible but were rejected during design. Recorded so
 # the absence is a decision on the record, not an oversight.
 KNOWN_BLIND_SPOTS = [
-    {
-        "id": "DOC-91",
-        "wanted": "detect the same fact stated with two different values",
-        "why_not": (
-            "requires that the fact be keyed. Nothing in the current document "
-            "set names which literal owns which fact, so there is no sound way "
-            "to tell a contradiction from two legitimately-scoped statements."
-        ),
-        "unblocks": "ADR-0028 — model owns the value, prose states the rule",
-    },
 ]
 
 
@@ -721,6 +711,61 @@ def doc_10_duplicate_heading(c: Corpus) -> list[Finding]:
     return out
 
 
+def doc_91_keyed_contradiction(c: Corpus) -> list[Finding]:
+    """A keyed fact must not be stated with a different value elsewhere.
+
+    This was a declared blind spot: nothing named which fact a sentence was
+    *about*, so a contradiction could not be told from two legitimately
+    scoped statements. The facts are keyed now.
+
+    The check covers version cross-references, which every artefact declares
+    in its own header block. A reference to `X vN.N.N` is a claim about X's
+    *current* version, except inside a `Supersedes` row, where naming an older
+    version is the entire point. That distinction is made by the field name,
+    not by reading the sentence.
+
+    Adopting this required a rule change, not just a check: a superseding
+    record may now retire the file it supersedes, so a superseded artefact's
+    own header no longer has to be current.
+    """
+    declared: dict[str, str] = {}
+    superseded: set[str] = set()
+    for p in c.files:
+        head = _artefact_header(p, c.text[p])
+        doc_id = head.get("Document ID")
+        ver = head.get("Version")
+        if doc_id and ver:
+            declared[_clean(doc_id[1])] = _clean(ver[1])
+        status = head.get("Status")
+        if doc_id and status and _clean(status[1]).lower().startswith("superseded"):
+            superseded.add(_clean(doc_id[1]))
+
+    if not declared:
+        return []
+
+    out: list[Finding] = []
+    for p in c.files:
+        text = c.text[p]
+        for i, line in enumerate(text.splitlines(), 1):
+            # A Supersedes row is a statement about history, not about "now".
+            in_supersedes = bool(re.match(r"^\|\s*Supersedes\s*\|", line))
+            for doc_id, ver in re.findall(
+                r"\b([A-Z][A-Z-]+-CMS-\d+)\s+v(\d+\.\d+\.\d+)\b", line
+            ):
+                if doc_id not in declared or declared[doc_id] == ver:
+                    continue
+                if doc_id in superseded:
+                    continue
+                if in_supersedes:
+                    continue
+                out.append(Finding(
+                    "DOC-91", "error", rel(c, p), i,
+                    f"cites {doc_id} v{ver}; that artefact declares v{declared[doc_id]}",
+                    line.strip()[:160],
+                ))
+    return out
+
+
 CHECKS = [
     ("DOC-01", doc_01_references),
     ("DOC-02/03", doc_02_03_links),
@@ -731,6 +776,7 @@ CHECKS = [
     ("DOC-08", doc_08_artefact_index),
     ("DOC-10", doc_10_duplicate_heading),
     ("DOC-90", doc_90_rejected_citation),
+    ("DOC-91", doc_91_keyed_contradiction),
 ]
 
 

@@ -21,7 +21,7 @@
 | **§1 replaces the monorepo/multi-repo question entirely.** v2.0.0 asserted DEC-01 (monorepo) with two citations. v3.0.0 shows by full-text evidence that the Team Topologies corpus contains **zero** repository-topology guidance (R-MONO-01 … R-MONO-04), and that the underlying boundaries are formally separable (R-MONO-06, R-MONO-08, R-MONO-10). The decision is now derived, not asserted. |
 | **§4 topology is team-scoped, not layer-scoped.** v2.0.0 used `apps/ bff/ teams/ platform/` — four axes, which fragments one team across up to three directories and forces a glob-precedence algorithm (v2.0.0 D-12) to resolve ownership. v3.0.0 gives **one team one top-level directory**, making ownership resolution total and order-free. |
 | **§12 and §13 are new and normative.** v2.0.0's nine NFRs covered only tooling latency. v3.0.0 adds 12 performance budgets and 10 resource-efficiency requirements, each with a numeric threshold and a named measurement. |
-| **19 factual corrections** carried from REF-CMS-001 v3.0.0's attribution table (e.g. `shareStrategy` options, `turbo boundaries` Experimental, SecretSpec is Cachix, OpenAPI latest is 3.2.1). |
+| **19 factual corrections** carried from the reference catalogue's attribution table (REF-CMS-001, at the version current when v3.0.0 was cut) (e.g. `shareStrategy` options, `turbo boundaries` Experimental, SecretSpec is Cachix, OpenAPI latest is 3.2.1). |
 | **SPL-01 … SPL-05 added**: deterministic criteria under which a bounded context *may* leave the repository. v2.0.0 had no exit path from monorepo. |
 
 ### Reading convention
@@ -1222,7 +1222,7 @@ Item 11 prevents the first. Item 12 prevents the second by fixing precedence rat
 
 ## 22. Key references
 
-The complete, fetch-verified catalogue is `docs/references.md` (REF-CMS-001 v3.0.0) — 379 admissible references (356 clean VERIFIED, 23 PARTIAL with a stated limitation), 77 rejected URLs that must never be cited, and 15 attribution corrections that must be carried wherever they appear.
+The complete, fetch-verified catalogue is `docs/references.md` (REF-CMS-001 v3.1.0) — **405** admissible references (381 clean VERIFIED, 24 PARTIAL with a stated limitation), **79** rejected URLs that must never be cited, and 15 attribution corrections that must be carried wherever they appear.
 
 | Used for | References |
 |---|---|
