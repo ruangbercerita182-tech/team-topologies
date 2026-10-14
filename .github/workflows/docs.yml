@@ -1,0 +1,65 @@
+name: docs
+
+# The document set is the only artefact this repository produces so far
+# (PRD NG-07). These gates exist because a fact with no single owner goes
+# stale the moment the thing it describes changes. See docs/adr/0028.
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: docs-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  gates:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # The generator writes generated blocks and must be verified against a
+          # known revision; a shallow clone has nothing to compare against.
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Documentation gates
+        run: python3 tools/docs/run_all.py
+
+      - name: Show what is on the baseline, so it cannot grow unnoticed
+        if: always()
+        run: |
+          echo "Baseline carried findings:"
+          python3 - <<'PY'
+          import json, pathlib
+          p = pathlib.Path("tools/docs/baseline.json")
+          for f in json.loads(p.read_text())["findings"]:
+              print("  " + f)
+          PY
+
+  external-links:
+    # Separate job: it touches the network and is slow, and a timeout there must
+    # not mask a coherence failure in the job above.
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || github.ref == 'refs/heads/main'
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Advisory — no external link checker is pinned yet
+        run: |
+          echo "R-DOC-02 (remark-validate-links) covers local links and anchors."
+          echo "External URL checking of docs/references.md is NOT yet wired:"
+          echo "  the catalogue holds 405 URLs and a re-verification sweep is"
+          echo "  T-1004's job, owned by the Solution Architect."
+          echo "Install lychee and pin a version before trusting this job."
+          echo "exit 0"

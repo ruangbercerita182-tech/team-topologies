@@ -1,0 +1,36 @@
+# Local hooks for the document set.
+#
+#   pip install pre-commit && pre-commit install
+#
+# The same gates run in CI (.github/workflows/docs.yml) via tools/docs/run_all.py.
+# pre-commit is not required -- it only makes the failure arrive before the push
+# instead of after it.
+
+default_language_version:
+  python: python3
+
+repos:
+  - repo: local
+    hooks:
+      - id: docs-fixtures
+        name: every check has a fixture that makes it fail
+        entry: python3 tools/docs/test_check_docs.py
+        language: system
+        files: ^tools/docs/
+        pass_filenames: false
+
+      - id: docs-generated-up-to-date
+        name: generated index blocks are current
+        entry: python3 tools/docs/gen_docs.py -C docs --check
+        language: system
+        files: ^(docs/|tools/docs/gen_docs\.py$)
+        pass_filenames: false
+
+      - id: docs-coherence
+        name: no new document drift
+        entry: >-
+          python3 tools/docs/check_docs.py -C docs --fail-on warning
+          --baseline tools/docs/baseline.json
+        language: system
+        files: ^docs/
+        pass_filenames: false

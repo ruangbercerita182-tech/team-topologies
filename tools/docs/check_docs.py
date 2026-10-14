@@ -22,6 +22,7 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import subprocess
 import sys
 import unicodedata
 from dataclasses import dataclass, field
@@ -272,54 +273,37 @@ def doc_04_adr_claims(c: Corpus) -> list[Finding]:
 # --------------------------------------------------------------------------
 # DOC-05  every PRD decision is addressed by at least one ADR
 # --------------------------------------------------------------------------
-def _expand_dec(text: str) -> set[str]:
-    """Collect DEC-nn mentions, expanding the DEC-a...DEC-b range shorthand."""
+def _generated_block(c: Corpus, path: Path, name: str) -> str | None:
+    """Body of a named generated block, or None if absent.
+
+    A checker that validates generated output is the other half of generating
+    it. Where a block exists, the generated text is the authority; falling back
+    to hand-written prose would let the two disagree and only one be checked.
+    """
+    src = c.root / path
+    if not src.is_file():
+        return None
+    m = re.search(
+        rf"<!-- BEGIN GENERATED: {re.escape(name)}\b[^\n]*-->\n(.*?)<!-- END GENERATED: {re.escape(name)} -->",
+        c.text[src], re.S,
+    )
+    return m.group(1) if m else None
+
+
+def _claims_from_field(a_text: str) -> set[str]:
+    """DEC ids in a cell, expanding the DEC-a...DEC-b range shorthand.
+
+    Range expansion is not optional. Without it 'DEC-17...DEC-19' yields
+    {DEC-17, DEC-19} and DEC-18 is reported uncovered, which is exactly the
+    class of false positive this check already produced once before.
+    """
     found: set[str] = set()
-    for a, b in re.findall(r"\bDEC-(\d{2})\s*(?:…|\.\.\.|–|-)\s*DEC-(\d{2})\b", text):
+    for a, b in re.findall(r"\bDEC-(\d{2})\s*(?:…|\.\.\.|–|-)\s*DEC-(\d{2})\b", a_text):
         lo, hi = int(a), int(b)
         if lo <= hi and hi - lo <= 32:
             found |= {f"DEC-{n:02d}" for n in range(lo, hi + 1)}
-    found |= set(re.findall(r"\bDEC-\d{2}\b", text))
+    found |= set(re.findall(r"\bDEC-\d{2}\b", a_text))
     return found
-
-
-def _traceability_cells(c: Corpus) -> str:
-    """Return only the DEC -> ADR traceability table of adr/README.md.
-
-    Parsing the whole index file is unsound: its header states
-    "Basis | PRD DEC-01...DEC-24", which is background, not a claim that
-    those decisions are covered. Reading that row as coverage made DEC-05
-    pass with DEC-10 demonstrably uncovered.
-    """
-    index = c.root / "adr" / "README.md"
-    if not index.exists():
-        return ""
-    lines = c.text[index].splitlines()
-    start = None
-    for i, line in enumerate(lines):
-        if line.lstrip("# ").lower().startswith("traceability"):
-            start = i
-            break
-    if start is None:
-        return ""
-    cells: list[str] = []
-    for line in lines[start + 1:]:
-        if line.startswith("## "):
-            break
-        m = re.match(r"^\|\s*([^|]+?)\s*\|", line)
-        if m and "ADR" not in m.group(1):
-            cells.append(m.group(1))
-    return "\n".join(cells)
-
-
-def _closes_decls(c: Corpus) -> set[str]:
-    """DEC-nn asserted by an ADR's own 'Closes:' assertion line."""
-    out: set[str] = set()
-    for a in c.adrs:
-        for line in c.text[a].splitlines():
-            if "Closes:" in line:
-                out |= set(re.findall(r"\bDEC-\d{2}\b", line))
-    return out
 
 
 def doc_05_dec_coverage(c: Corpus) -> list[Finding]:
@@ -330,17 +314,69 @@ def doc_05_dec_coverage(c: Corpus) -> list[Finding]:
     if not decs:
         return []
 
-    covered = _closes_decls(c) | _expand_dec(_traceability_cells(c))
+    index = "adr/README.md"
 
+    # Authority: the generated traceability block, when present.
+    generated = _generated_block(c, Path(index), "adr-traceability")
+    if generated is not None:
+        derived: set[str] = set()
+        for line in generated.splitlines():
+            if not line.startswith("|"):
+                continue
+            cells = [x.strip() for x in line.strip("|").split("|")]
+            if len(cells) < 2 or cells[0] == "PRD decision":
+                continue
+            derived |= _claims_from_field(cells[0])
+        # The authored section below the generated block is Tier B by ADR-0028.
+        # It is a claim, not a derivation, so a decision covered only there is
+        # reported as authored rather than counted as derived coverage.
+        authored_only = _authored_claims(c, index)
+        missing = sorted(decs - derived - authored_only)
+        if not missing:
+            return []
+        return [Finding(
+            "DOC-05", "warning", index, 0,
+            f"{len(missing)} of {len(decs)} PRD decisions are claimed by neither the "
+            f"generated traceability nor the authored table: {', '.join(missing)}",
+            "adr/README.md asserts every PRD decision maps to at least one ADR",
+        )]
+
+    # Fallback for a corpus with no generated block yet.
+    covered: set[str] = set()
+    for a in c.adrs:
+        for line in c.text[a].splitlines():
+            if "Closes:" in line:
+                covered |= set(re.findall(r"\bDEC-\d{2}\b", line))
     missing = sorted(decs - covered)
     if not missing:
         return []
     return [Finding(
-        "DOC-05", "warning", "adr/", 0,
-        f"{len(missing)} of {len(decs)} PRD decisions have no ADR: "
-        f"{', '.join(missing)}",
-        "adr/README.md:77 states every PRD decision maps to at least one ADR",
+        "DOC-05", "warning", index, 0,
+        f"{len(missing)} of {len(decs)} PRD decisions have no ADR: {', '.join(missing)}",
+        "adr/README.md asserts every PRD decision maps to at least one ADR",
     )]
+
+
+def _authored_claims(c: Corpus, index: str) -> set[str]:
+    """DEC ids covered only by the authored, non-derivable mappings."""
+    src = c.root / index
+    if not src.is_file():
+        return set()
+    text = c.text[src]
+    heading = "### Editorial mappings not derivable from any record"
+    if heading not in text:
+        return set()
+    seg = text.split(heading, 1)[1]
+    seg = seg.split("\n## ", 1)[0]
+    out: set[str] = set()
+    for line in seg.splitlines():
+        if not line.startswith("|"):
+            continue
+        cells = [x.strip() for x in line.strip("|").split("|")]
+        if len(cells) < 2 or cells[0] == "PRD decision":
+            continue
+        out |= _claims_from_field(cells[0])
+    return out
 
 
 # --------------------------------------------------------------------------
@@ -648,6 +684,55 @@ def run(root: Path, fail_on: str) -> tuple[list[Finding], list[tuple[Finding, st
     return kept, suppressed, c
 
 
+def finding_key(f: Finding) -> str:
+    """Stable identity of a finding, so a baseline survives line-number churn."""
+    return f"{f.check}|{f.path}|{f.message}"
+
+
+def load_baseline(path: Path) -> tuple[set[str], str | None]:
+    """Return (known finding keys, baseline of this run's source revision).
+
+    The revision is recorded so a gate can tell "no new drift" from "nothing has
+    ever been checked". A baseline with no revision is not a baseline.
+    """
+    if not path.exists():
+        raise BaselineError(f"baseline file not found: {path}")
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise BaselineError(str(exc)) from exc
+    if "sourceRevision" not in data:
+        raise BaselineError("baseline has no 'sourceRevision'; refusing to treat it as valid")
+    return set(data.get("findings", [])), data.get("sourceRevision")
+
+
+class BaselineError(Exception):
+    """A malformed baseline is a configuration error, never a clean result."""
+
+
+def git_revision(root: Path) -> str | None:
+    try:
+        res = subprocess.run(
+            ["git", "-C", str(root), "rev-parse", "HEAD"],
+            capture_output=True, text=True, timeout=10, check=False,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return None
+    return res.stdout.strip() or None
+
+
+def write_baseline(path: Path, findings: list[Finding], revision: str | None) -> int:
+    payload = {
+        "note": "Known findings at adoption. check_docs fails only on NEW drift. "
+                "Regenerate with --write-baseline once a finding is genuinely closed.",
+        "sourceRevision": revision or "unknown",
+        "findings": sorted(finding_key(f) for f in findings),
+    }
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+    return len(payload["findings"])
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="check_docs")
     ap.add_argument("-C", "--root", default="docs", help="document root (default: docs)")
@@ -656,6 +741,10 @@ def main(argv: list[str] | None = None) -> int:
                     help="lowest severity that fails the build (default: error)")
     ap.add_argument("--format", default="text", choices=["text", "json"])
     ap.add_argument("--list-blind-spots", action="store_true")
+    ap.add_argument("--baseline", metavar="PATH",
+                    help="fail only on findings not already recorded in this baseline")
+    ap.add_argument("--write-baseline", metavar="PATH",
+                    help="record the current findings as the baseline, then exit 0")
     args = ap.parse_args(argv)
 
     if args.list_blind_spots:
@@ -673,7 +762,25 @@ def main(argv: list[str] | None = None) -> int:
         print(f"check_docs: cannot read corpus: {exc}", file=sys.stderr)
         return 2
 
-    blocking = [f for f in findings if f.severity != "info"]
+    if args.write_baseline:
+        n = write_baseline(Path(args.write_baseline), findings, git_revision(root.parent))
+        print(f"check_docs: baseline written with {n} finding(s) -> {args.write_baseline}")
+        return 0
+
+    known: set[str] = set()
+    baseline_rev = None
+    if args.baseline:
+        try:
+            known, baseline_rev = load_baseline(Path(args.baseline))
+        except BaselineError as exc:
+            print(f"check_docs: unusable baseline {args.baseline}: {exc}", file=sys.stderr)
+            print("check_docs: a broken baseline must not read as 'no drift'.", file=sys.stderr)
+            return 2
+
+    fresh = [f for f in findings if finding_key(f) not in known]
+    pre_existing = [f for f in findings if finding_key(f) in known]
+
+    blocking = [f for f in fresh if f.severity != "info"]
 
     if args.format == "json":
         print(json.dumps({
@@ -681,7 +788,10 @@ def main(argv: list[str] | None = None) -> int:
             "documents": len(corpus.files),
             "adrs": len(corpus.adrs),
             "failOn": args.fail_on,
-            "findings": [f.__dict__ for f in findings],
+            "baseline": args.baseline,
+            "baselineRevision": baseline_rev,
+            "newFindings": [f.__dict__ for f in fresh],
+            "knownFindings": [f.__dict__ for f in pre_existing],
             "suppressed": [
                 {"finding": f.__dict__, "reason": r} for f, r in suppressed
             ],
@@ -689,18 +799,22 @@ def main(argv: list[str] | None = None) -> int:
         }, indent=2))
     else:
         print(f"check_docs: {len(corpus.files)} documents, {len(corpus.adrs)} ADR records, root={root}")
+        if args.baseline:
+            print(f"baseline: {len(pre_existing)} known, {len(fresh)} new")
         if not findings:
             print("clean")
+        elif args.baseline and not fresh:
+            print(f"no new drift ({len(pre_existing)} pre-existing finding(s) carried by baseline)")
         else:
-            for f in findings:
+            for f in (fresh if args.baseline else findings):
                 print(f.render())
         if suppressed:
             print(f"\nsuppressed ({len(suppressed)}) — declared in-document, still visible:")
             for f, reason in suppressed:
                 print(f"  [suppressed] {f.check} {f.path}:{f.line}")
                 print(f"      reason: {reason}")
-        print(f"\n{len(findings)} finding(s); {len(suppressed)} suppressed; "
-              f"{len(KNOWN_BLIND_SPOTS)} declared blind spot(s)")
+        print(f"\n{len(fresh)} finding(s) to act on; {len(pre_existing)} carried by baseline; "
+              f"{len(suppressed)} suppressed; {len(KNOWN_BLIND_SPOTS)} declared blind spot(s)")
 
     if args.fail_on == "none":
         return 0

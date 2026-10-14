@@ -38,6 +38,8 @@ CASES = [
     ("doc08-owner-conflict",   "DOC-08", "error"),
     ("doc08-unregistered",     "DOC-08", "warning"),
     ("doc09-suppressed",       None,      None),
+    ("doc05-range-authored",   None,      None),
+    ("doc05-uncovered-both",   "DOC-05",  "warning"),
 ]
 
 
