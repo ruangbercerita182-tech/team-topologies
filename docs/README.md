@@ -42,9 +42,20 @@ silently copy one version into another.
 Accountable roles are canonical in [`RACI.md`](RACI.md) §2; decision rights are in §5. Summarised
 here for navigation only.
 
-
-
-
+<!-- BEGIN GENERATED: artefact-index — owner: the | Field | Value | header of each artefact. Edit the owner, not this block. -->
+| Artefact | ID | Version | Status | Accountable |
+|---|---|---|---|---|
+| README | `DOC-INDEX-CMS-001` | — | Active | Solution Architect — this index is derived from the artefacts it indexes |
+| PRD | `PRD-CMS-001` | 3.1.0 | Approved for implementation | Solution Architect |
+| TDD | `TDD-CMS-001` | 1.1.0 | Proposed — supersedes nothing; normative detail *under* PRD-CMS-001 v3.1.0 | Technical Lead |
+| IMPLEMENTATION-PLAN | `IMP-CMS-001` | 1.0.0 | Proposed | Project Manager |
+| TECHNICAL-IMPLEMENTATION-PLAN | `TIMP-CMS-001` | 1.0.0 | Proposed | Technical Lead |
+| TEST-PLAN | `TEST-CMS-001` | 1.0.0 | Proposed | QA / Test Lead |
+| DEPLOYMENT-PLAN | `DEP-CMS-001` | 1.0.0 | Proposed | DevOps lead; Technical Lead co-signs application rollout order |
+| RACI | `RACI-CMS-001` | 1.1.0 | Proposed | Project Manager |
+| references | `REF-CMS-001` | 3.1.0 | Active | Solution Architect |
+| REFERRALS-SA | `REF-SA-CMS-001` | 2.0.0 | Closed | — |
+<!-- END GENERATED: artefact-index -->
 Only `PRD-CMS-001` is approved. Everything downstream is `Proposed` and inherits its authority
 from the PRD rather than carrying its own.
 
@@ -115,18 +126,3 @@ generated or mechanically checked. The check is `tools/docs/check_docs.py`, with
    catalogue (`adr/README.md`).
 4. An accepted ADR is not edited. Corrections land as a superseding ADR.
 5. Register any new artefact in §2 above and give it a `<TYPE>-CMS-00n` ID.
-
-<!-- BEGIN GENERATED: artefact-index — owner: the | Field | Value | header of each artefact. Edit the owner, not this block. -->
-| Artefact | ID | Version | Status | Accountable |
-|---|---|---|---|---|
-| README | `DOC-INDEX-CMS-001` | — | Active | **Solution Architect** — this index is derived from the artefacts it indexes (ADR-0028). Not named in `RACI.md` §2; that omission is referred to the PM |
-| PRD | `PRD-CMS-001` | 3.1.0 | Approved for implementation | **Solution Architect** (RACI-CMS-001 §2) |
-| TDD | `TDD-CMS-001` | 1.1.0 | Proposed — supersedes nothing; normative detail *under* PRD-CMS-001 v3.1.0 | **Technical Lead** (RACI-CMS-001 §2, §3). A single accountable, per RACI §3: *"splitting the file is optional; splitting the accountability is not."* SA owns the content of §1–§23 by direction; the artefact has one owner. |
-| IMPLEMENTATION-PLAN | `IMP-CMS-001` | 1.0.0 | Proposed | **Project Manager** (RACI-CMS-001 §2) |
-| TECHNICAL-IMPLEMENTATION-PLAN | `TIMP-CMS-001` | 1.0.0 | Proposed | **Technical Lead** (RACI-CMS-001 §2) |
-| TEST-PLAN | `TEST-CMS-001` | 1.0.0 | Proposed | **QA / Test Lead** (RACI-CMS-001 §2) |
-| DEPLOYMENT-PLAN | `DEP-CMS-001` | 1.0.0 | Proposed | **DevOps lead**; Technical Lead co-signs application rollout order (RACI-CMS-001 §2) |
-| RACI | `RACI-CMS-001` | 1.0.0 | Proposed | — |
-| references | `REF-CMS-001` | 3.1.0 | Active | **Solution Architect** (RACI-CMS-001 §2) |
-| REFERRALS-SA | `REF-SA-CMS-001` | 1.0.0 | Open | — |
-<!-- END GENERATED: artefact-index -->

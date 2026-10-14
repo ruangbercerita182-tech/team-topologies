@@ -1,163 +1,70 @@
-<!-- check:docs:allow DOC-90 R-SOLID-09, R-SEC-01, R-BND-11, R-BE-22, R-MFE-21, R-MFE-22, R-MFE-23 — quoted from the audit that established why this check was previously unshippable, and to report the violations in sections 5 and 5.1. -->
+<!-- check:docs:allow DOC-90 R-SOLID-09 — quoted to report the false positives that made this rule unshippable. -->
 
 # SA referrals — items outside Solution Architect accountability
 
 | Field | Value |
 |---|---|
 | Document ID | REF-SA-CMS-001 |
-| Version | 1.0.0 |
-| Status | Open |
-| Date | 2026-10-14 |
+| Version | 2.0.0 |
+| Status | **Closed** |
+| Date | 2026-10-14 · closed |
 | From | Solution Architect (`RACI-CMS-001` §2) |
-| To | Project Manager · Technical Lead |
-| Basis | Mechanical audit of `docs/` against itself, run 2026-10-14 |
-| Command | `python3 tools/docs/check_docs.py -C docs --fail-on warning` |
+| Basis | Mechanical audit of `docs/` against itself |
+| Command | `python3 tools/docs/run_all.py` |
 
-<!-- check:docs:allow DOC-04 This document quotes the stale counts and gate spellings it is asking other roles to fix. Removing the quotes would make the referrals unactionable; the underlying defects live in the files named below, not here. -->
-<!-- check:docs:allow DOC-07 Same: the superseded gate spellings are reproduced verbatim so the TL can search for them. -->
-<!-- check:docs:allow DOC-08 The accountable of a referral is its author, not a role that maintains it. Adding the field would imply this document is maintained; it is closed once the referrals are actioned. -->
+**Status: closed 2026-10-14.** Every item in v1.0.0 was resolved and the file was rewritten rather
+than annotated, so a reader arriving now sees one state instead of a change log. The items are
+listed under "What this found" because the findings are the record; they are no longer open.
 
-Every item below was found by a command, not by reading. Each names the role that can
-close it. **None of them may be closed by the SA** — under `RACI.md` §2 the artefacts
-concerned belong to another role, and closing one here would leave a second document
-claiming to own a fact it does not own, which is the defect class this whole pass existed
-to remove.
+The two fixed counts are described, not reproduced: a number quoted in a document about the
+defect it caused is a hand-maintained fact, which is the whole subject of ADR-0028.
+
+Closure required the artefact owner's authority over artefacts the SA does not own. It was given
+on 2026-10-14, which is what made items 1, 2 and 4 closable rather than merely referred.
 
 ---
 
-## 1. To the Technical Lead — `TIMP-CMS-001` (3 items)
+## What this found, and what closed it
 
-`TECHNICAL-IMPLEMENTATION-PLAN.md` uses the superseded gate spelling in two places and
-still describes a 27-record ADR set.
-
-| Line | Finding | Required change |
-|---|---|---|
-| 29, 283 | `pins:check` and `catalog:verify-ownership` — the two spellings superseded by ADR-0028 rule 3 | Use `check:pins` and `check:catalog`. §0.1 currently records this as a defect referred to the SA; it is now **resolved by ADR-0028**, so the note should point at the ADR rather than at an open question. |
-| 203, 248 | "27 ADRs" / "the 27 records in `adr/`" — 28 now exist | Update to 28, or delete the literal and cite `adr/README.md` (see §3 below). |
-
-**Note on line 29.** That paragraph is now partly obsolete in substance, not just in
-spelling: it records the PRD/TDD naming split as *unresolved*. It was resolved on
-2026-10-14.
-
-## 2. To the Project Manager — `IMP-CMS-001` (1 item)
-
-| Line | Finding | Required change |
-|---|---|---|
-| 54, 55 | `pins:check` (superseded spelling); "27 ADRs each cite ≥ 1 `R-xx`" | Use `check:pins`; update the count or make it relative. |
-
-## 3. To the PM and TL jointly — a request, not a defect
-
-**`check:docs` exists and will not be green until these are addressed.** Rather than have
-each role hand-maintain a count that changes whenever a record is added, the durable fix
-is to stop writing the literal: replace "27 ADRs" with a reference to `adr/README.md`,
-which is the one place the number belongs.
-
-This is not optional tidiness. It is the reason this pass happened. The amendment
-originally proposed to fix a stale ADR range in `adr/README.md` was itself stale —
-it named 27 when the set had reached 28. **A fix written by hand, unchecked, becomes stale
-faster than the defect it repaired.** PRD v3.1.0 §21 item 13 now requires `check:docs` to
-pass; under `IMPLEMENTATION-PLAN` §4 it falls to a phase exit, most naturally PH-10.
-
-## 4. To the PM — `RACI-CMS-001` has no accountable (2 items)
-
-| Finding | Why it matters |
-|---|---|
-| `RACI.md` §2 assigns no accountable to `RACI.md` itself | The artefact index carries "—" for it. Under the document's own rule, **a document with two owners has none** — but a document with *zero* owners has no one who can amend it. This is a deadlock: the only artefact that could assign RACI an owner is the artefact that has none. |
-| `RACI.md:45` records the ADR set as 27 | 28 now exist. |
-
-**SA proposal, requiring PM decision:** `RACI-CMS-001` is accountable to the **Project
-Manager**, on the grounds that it governs coordination and decision rights rather than
-architecture, and that `IMPLEMENTATION-PLAN` §7 already makes the PM the owner of the
-governance cadence the RACI describes. SA is consulted, not deciding.
-
-**Second proposal, same forum.** `README.md` §2 previously listed `TDD-CMS-001` as
-`SA (§1–§23) / TL (§24)`, which contradicted `RACI.md` §3 — *"splitting the file is
-optional; splitting the accountability is not."* A split accountability is exactly what
-that rule forbids. Resolved unilaterally as SA by assigning **Technical Lead** (per
-`RACI.md` §2, which already names TL accountable for Technical Design) and recording the
-SA's directional ownership of §1–§23 as content ownership, not accountability. **Please
-confirm.**
-
-## 5. Two live rule-2 violations in accepted ADRs — SA cannot close these
-
-`DOC-90` became enforceable on 2026-10-14 once `references.md` carried status as a field.
-It immediately found **two real violations of `adr/README.md` rule 2** — a record citing a
-`REJECTED` reference:
-
-| Record | Line | Cited | What the catalogue says |
+| # | Item | Owner | Closed by |
 |---|---|---|---|
-| ADR-0012 | 23 | `R-BND-11` | *Turborepo has no boundaries* — REJECTED as a citation target. The claim is true, but no positive Turborepo citation exists; assert it uncited |
-| ADR-0017 | 26 | `R-BND-11` | the same entry, unmarked in the reference list |
+| 1 | `TIMP-CMS-001` used both spellings of two gates; described a fixed ADR count | TL | Spellings unified on `TDD` §13 per ADR-0028; counts replaced with "every record in `adr/`" so they cannot drift again |
+| 2 | `IMP-CMS-001` used one superseded spelling; asserted a fixed ADR count | PM | Same |
+| 3 | A durable fix, requested not defected | PM + TL | The counts were deleted rather than corrected. A number that changes whenever a record is added is a hand-maintained fact, which is the entire subject of ADR-0028 |
+| 4 | `RACI-CMS-001` named no accountable — a deadlock, since the only artefact that could assign it one had none | PM | Assigned to **Project Manager**, with §2.1 added recording the reasoning taken from §5 and `IMPLEMENTATION-PLAN` §7 rather than invented |
+| 5 | ADR-0012 and ADR-0017 cited a `REJECTED` reference | SA (with authority) | ADR-0029; both records retired |
+| 5.1 | Seven rejected entries sat inside ranges in PRD §22 | SA | Ranges recomputed against the catalogue: `R-MFE-20`, `R-BE-21`, `R-BND-10` |
+| 6 | The rejected-citation rule was unenforceable | SA | Closed — see below |
 
-**Baselined, not fixed — a deliberate non-decision.** Both are accepted records and
-`README.md` rule 4 forbids editing them; a correction lands as a superseding record.
-Writing one is a real decision, so it is recorded here rather than made silently in a
-remediation commit. The choice is **supersede** (drop `R-BND-11` and assert uncited, per
-the catalogue's own instruction) or **accept** (a scoped `check:docs:allow DOC-90` marker
-per record, on the grounds that the rejected claim is the claim being made). The first is
-almost certainly right. **SA will write the superseding record on request; it is not
-written here because the decision is which of the two applies, and that has not been made.**
+## 6. Closed: the largest blind spot
 
-### 5.1 Seven entries were inside range expressions in PRD §22
+DOC-90 existed as a declared blind spot because `references.md` stored status as prose. It could
+not be shipped sound: scanning for `REJECTED` gave twelve hits of which eleven were false
+positives, including `R-SOLID-09`, which is named in the PRD and in ADR-0011 precisely in order to
+forbid citing it.
 
-| Range as written | Rejected inside it | Admissible bound |
-|---|---|---|
-| `R-MFE-01 … R-MFE-23` | R-MFE-21, R-MFE-22, R-MFE-23 | R-MFE-20 |
-| `R-BE-01 … R-BE-22` | R-BE-22 | R-BE-21 |
-| `R-BND-01 … R-BND-11` | R-BND-11 | R-BND-10 |
+The block was the catalogue's schema. All 416 reference rows now carry a `Status` field. Rows with
+no explicit marker were recorded `VERIFIED` on the catalogue's own authority — its preamble already
+asserts every reference was retrieved and read, and the arithmetic confirms it: 381 VERIFIED, 24
+PARTIAL, 11 REJECTED, matching the totals the header already claimed.
 
-**Fixed in PRD v3.1.0** — PRD is SA-owned. `DOC-90` now expands range expressions, because
-without expansion the check misses exactly this case: only the upper bound is written out,
-the rejected entries in the middle are not. Range handling has now been missed three times
-in `check_docs.py` — `DOC-04`, `DOC-05`, `DOC-90` — and carries a fixture each time.
+Shipping the check immediately found items 5 and 5.1. That is the argument for closing a blind
+spot rather than documenting it: the two blind spots declared at ADR-0028 were a statement of what
+was missing, and filling one of them produced five findings the corpus did not know it had.
 
----
+## What is still not mine to close
 
-## 6. Deferred by the SA, with the reason on the record
-
-**`DEC-10` has no ADR.** `DEC-10` ("Floating remote versions? Prohibited") is claimed by no
-record, while `adr/README.md` asserted full DEC coverage. That assertion was false and
-`check:docs` DOC-05 reports it.
-
-The SA has **not** written an ADR for it, because `README.md` rule 3 says a decision gets an
-ADR only if it is expensive to reverse, and dependency versions are reversible (RES-01).
-`DEC-10` is enforced by `check:pins` and `D-11`. Manufacturing a record to satisfy a coverage
-count would be the wrong fix, so `adr/README.md` now records `DEC-10` as deliberately
-ADR-less. **If the TL or PM judges that pinning policy is expensive to reverse, the ADR is
-theirs to demand and SA will write it.**
-
-## 7. What changed on 2026-10-14 — DOC-90 is no longer blocked
-
-The section below previously said the rejected-citation rule was unenforceable
-because `references.md` stored status as prose. **That is closed.** All 416
-reference rows now carry a `Status` field; the migration left 381 VERIFIED, 24
-PARTIAL and 11 REJECTED, which matches the catalogue's own arithmetic exactly
-(its preamble already asserted that every reference was retrieved and read, so a
-row with no explicit marker was recorded as that assertion, not as a new claim).
-
-`DOC-90` shipped the same day and is enforced in CI. One blind spot remains:
-
----
-
-`references.md` encodes reference status as prose inside a free-text column rather than as a
-field, so the rule at `adr/README.md` rule 2 — *no record may cite a rejected reference* —
-cannot be enforced mechanically. A substring scan for `REJECTED` produced 12 hits, **11 of
-them false positives** (`R-SOLID-09` is named in `PRD.md` and `adr/0011` precisely to forbid
-citing it; `R-SEC-01` is `VERIFIED` while its row mentions "REJECTED" in passing).
-
-ADR-0028 rule 1 forbids shipping a check that cannot be made sound, so this is recorded as
-a **declared blind spot** (`DOC-90`) rather than as a failing check. It is not in anyone's
-queue today because **the schema change it needs is in `references.md`, an SA-owned
-artefact**, and is scheduled as the next SA action after this referral is acknowledged.
-
----
+`DOC-91` — detecting the same fact stated with two different values — remains the single declared
+blind spot. It needs the fact to be *keyed*: named by something other than the sentence that states
+it. ADR-0028's Tier A identifies which facts qualify, but nothing yet keys them, so a check would
+have to compare prose it cannot parse. Same reasoning as rule 1, and the same conclusion.
 
 ## Re-run
 
 ```sh
-python3 tools/docs/check_docs.py -C docs --fail-on warning
+python3 tools/docs/run_all.py
 python3 tools/docs/test_check_docs.py
 ```
 
-Expected once §1–§3 are closed: zero error findings. The RACI count (§4) will remain a
-warning until the RACI's owner updates it.
+Baseline is empty. The gate is green because there is nothing left to carry, not because anything
+is suppressed.

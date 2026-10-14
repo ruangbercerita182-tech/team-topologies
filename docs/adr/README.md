@@ -18,7 +18,7 @@ Generated from the records themselves. The owner is each ADR's own H1,
 header fields and `## References` section — edit the record, never this table.
 
 <!-- BEGIN GENERATED: adr-index — owner: adr/[0-9][0-9][0-9][0-9]-*.md. Edit the owner, not this block. -->
-| Status of the set | 29 accepted records; none superseded |
+| Status of the set | 27 accepted; 2 superseded by a later record |
 
 | ADR | Title | Gate | Addresses | Evidence |
 |---|---|---|---|---|
@@ -33,12 +33,12 @@ header fields and `## References` section — edit the record, never this table.
 | [0009](0009-authorisation-in-every-context-per-request.md) | Authorisation is enforced in the bounded context, on every request | PH-6 | Closes: PRD DEC-12, D-06, AC-12 | R-MFE-15, R-MFE-16, R-MFE-17, R-SEC-01, R-BFF-01, R-TT-03 |
 | [0010](0010-micro-frontends-for-deployment-independence-only.md) | Micro-frontends are adopted for deployment independence, never for isolation | PH-6 | Closes: PRD DEC-06, NG-03, §11.1 | R-MFE-01, R-MFE-02, R-MFE-03, R-MFE-04, R-MFE-06, R-MFE-12, R-MFE-15 |
 | [0011](0011-solid-at-layer-boundaries-only.md) | SOLID is applied at layer boundaries only | PH-7 | Closes: PRD DEC-16, §10.1 | R-SOLID-01, R-SOLID-02, R-SOLID-03, R-SOLID-04, R-SOLID-05, R-SOLID-06, R-SOLID-07, R-SOLID-08, R-SOLID-09, R-SOLID-10, R-CA-01, R-CA-02, R-CA-06 |
-| [0012](0012-two-boundary-mechanisms-not-one.md) | Critical constraints are not gated on a single experimental mechanism | PH-7 | Closes: PRD DEC-14, AC-01, FR-14, RISK-05 | R-BND-01, R-BND-02, R-BND-04, R-BND-11, R-BND-12, R-BND-13, R-SOLID-10 |
+| [0012](0012-two-boundary-mechanisms-not-one.md) | Critical constraints are not gated on a single experimental mechanism | PH-7 | Closes: PRD DEC-14, AC-01, FR-14, RISK-05 | R-BND-01, R-BND-02, R-BND-04, R-BND-12, R-BND-13, R-SOLID-10 |
 | [0013](0013-module-federation-optimisation-flags.md) | Federation size is bought with `externalRuntime` + `disableSnapshot`, never with `disableShared` | PH-6 | Closes: TDD GAP-01, GAP-02, GAP-03 | R-MF-21, R-MF-22, R-MF-23, R-MF-24, R-MF-03, R-MF-08 |
 | [0014](0014-route-data-strategy.md) | Every route declares a data strategy; the aggregator participates only where it is needed | PH-2 | Closes: TDD GAP-04 | R-BFF-01, R-BFF-02, R-BFF-05, R-BFF-13, R-RES-09, R-AGGR-06 |
 | [0015](0015-aggregator-forwards-the-user-subject.md) | The aggregator forwards the end-user subject and never substitutes a service identity | PH-6 | Closes: TDD GAP-05 | R-BFF-01, R-BFF-04, R-SEC-01, R-INT-02, R-MFE-25, R-META-27 |
 | [0016](0016-self-declared-ownership-invariants.md) | Self-declared ownership is safe only because of two invariants | PH-2 | Closes: TDD GAP-06 | R-OWN-01, R-OWN-02, R-OWN-03, R-OWN-04, R-OWN-05, R-OWN-06, R-MONO-38, R-META-26 |
-| [0017](0017-boundary-enforcement-scope.md) | The boundary gate matrix: what each mechanism actually covers | PH-7 | Closes: TDD GAP-07; Refines: ADR-0012 | R-BND-01, R-BND-04, R-BND-11, R-BND-12, R-BND-13 |
+| [0017](0017-boundary-enforcement-scope.md) | The boundary gate matrix: what each mechanism actually covers | PH-7 | Closes: TDD GAP-07; Refines: ADR-0012 | R-BND-01, R-BND-04, R-BND-12, R-BND-13 |
 | [0018](0018-direnv-activation-with-pinned-script.md) | direnv stays for reviewability, with the activation script pinned by hash | PH-5 | Closes: TDD GAP-08; Amends: PRD DEC-07 and §9's `.envrc` snippet | R-DIR-01, R-DIR-02, R-DIR-03, R-DV-10, R-DV-15, R-DV-16, R-DV-17, R-DV-08 |
 | [0019](0019-artefact-duplication-budgets.md) | Budget what the artefact costs, not only what one navigation downloads | PH-8 | Closes: TDD GAP-09 | R-MFE-06, R-MFE-24, R-MFE-26, R-PERF-11, R-PERF-15, R-PERF-19 |
 | [0020](0020-contract-verification-against-the-published-schema.md) | Consumer verification runs against the provider's published contract | PH-6 | Closes: TDD GAP-10; Refines: PRD FR-23 | R-CDC-01, R-CDC-03, R-CDC-04, R-META-12, R-META-13, R-SEC-01 |
@@ -50,7 +50,7 @@ header fields and `## References` section — edit the record, never this table.
 | [0026](0026-generated-dependency-manifests.md) | Package dependency lists are generated from the interface ledger | PH-3 | Refines: ADR-0007 | R-META-09, R-META-26, R-BND-12, R-BND-13, R-BUILD-02, R-BUILD-09 |
 | [0027](0027-phase-sequencing-is-dependency-gated.md) | Phase sequencing is gated on artefact dependencies, not on phase order | PH-1 | Amends: PRD §18 (see PR-9 in the ADR README) | R-TT-03, R-OWN-03, R-OWN-04, R-RES-10, R-BUILD-01 |
 | [0028](0028-one-owner-per-derived-fact.md) | Every derived fact has one owner; prose states rules, the model holds values | PH-1 | Amends: none | R-META-07, R-META-09, R-META-19, R-META-20, R-META-01, R-META-03, R-OWN-01, R-OWN-02, R-OWN-05, R-DOC-01, R-DOC-02 |
-| [0029](0029-withdraw-r-bnd-11-citations.md) | Two records cited a rejected entry; the claims are true and the citations are withdrawn | PH-7 | Closes: `adr/README.md` rule-2 violation found by `DOC-90`; Amends: ADR-0012, ADR-0017 (reference lists only — neither decision is reopened) | R-BND-01, R-BND-02, R-BND-04, R-BND-11, R-BND-12, R-BND-13, R-SOLID-10, R-BND-07, R-META-26, R-DOC-02 |
+| [0029](0029-withdraw-r-bnd-11-citations.md) | Two records cited a rejected entry; the claims are true and the citations are withdrawn | PH-7 | Closes: `adr/README.md` rule-2 violation found by `DOC-90`; Amends: ADR-0012, ADR-0017 — | R-BND-01, R-BND-02, R-BND-04, R-BND-11, R-BND-12, R-BND-13, R-SOLID-10, R-BND-07, R-META-26, R-DOC-02 |
 <!-- END GENERATED: adr-index -->
 
 ---

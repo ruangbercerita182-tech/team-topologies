@@ -51,8 +51,8 @@ Phases are ordered per PRD §18. Durations are calendar weeks at the staffing ab
 | **PH-6** Reference context + aggregator | 4 | 16 | PH-3 + PH-4 exit | contracts green; aggregator store-free; **OTel browser instrumentation present** | SA |
 | **PH-7** Boundary + shell purity | 2 | 18 | PH-5 exit | all `check:*` pass; 4 seeded violations each fail | SA |
 | **PH-8** Performance + resource | 3 | 21 | PH-6 + PH-7 exit | PERF-02/03 enforced; budgets in CI; dev-server RSS baseline has 3 data points | QA |
-| **PH-9** Relocation to team-scoped layout | 3 | 24 | PH-1…PH-7 exit | `apps/`, `bff/`, `packages/`, `composition/` gone; one MF host; `pins:check` zero | TL |
-| **PH-10** Documentation + ADRs | 2 | 26 | PH-9 exit | a newcomer completes a local run from docs alone; 27 ADRs each cite ≥ 1 `R-xx`; ADR-0027 (sequencing) accepted | SA |
+| **PH-9** Relocation to team-scoped layout | 3 | 24 | PH-1…PH-7 exit | `apps/`, `bff/`, `packages/`, `composition/` gone; one MF host; `check:pins` zero | TL |
+| **PH-10** Documentation + ADRs | 2 | 26 | PH-9 exit | a newcomer completes a local run from docs alone; every ADR in `adr/` cites ≥ 1 `R-xx`; ADR-0027 (sequencing) accepted | SA |
 
 **Total: ~26 weeks (~6 months), 10 phases.** With a second platform engineer, PH-3 shortens by roughly 1 week; without a second web engineer, PH-6 does not shorten at all, because it is the only phase where the reference implementation must be genuinely good rather than merely compliant.
 

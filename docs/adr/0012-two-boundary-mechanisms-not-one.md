@@ -1,6 +1,6 @@
 # ADR-0012 — Critical constraints are not gated on a single experimental mechanism
 
-- **Status:** Accepted · **Date:** 2026-10-14 · **Decider:** Solution Architect · **Gate:** PH-7
+- **Status:** Superseded by ADR-0029 · **Date:** 2026-10-14 · **Decider:** Solution Architect · **Gate:** PH-7
 - **Closes:** PRD DEC-14, AC-01, FR-14, RISK-05
 
 ## Context
@@ -20,4 +20,4 @@ Two independent mechanisms police the dependency graph: `turbo boundaries` tags 
 - **Write our own dependency checker** — rejected: dependency-cruiser is maintained, understood, and paired with the resolver-aware ESLint rule.
 
 ## References
-R-BND-01, R-BND-02, R-BND-04, R-BND-11, R-BND-12, R-BND-13, R-SOLID-10
+R-BND-01, R-BND-02, R-BND-04, R-BND-12, R-BND-13, R-SOLID-10

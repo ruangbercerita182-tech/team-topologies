@@ -26,7 +26,7 @@ Three `D-nn` families and several check names collide across the document set. E
 | `R-n` (programme) | risk register in `IMPLEMENTATION-PLAN.md` §6, R-1…R-10 | `references.md` evidence codes |
 | `check:*` | TDD §13 check inventory, `CHK-01`…`CHK-22` | the generator's `catalog:*` commands |
 
-The PRD names two gates `pins:check` and `catalog:verify-ownership`; TDD §13 names the same gates `check:pins` (CHK-09) and `check:catalog` (CHK-01). **This plan uses the TDD §13 names**, because CHK is the inventory every phase exit is measured against; the PRD naming is recorded as a defect for the SA in §14.
+The PRD names two gates `check:pins` and `check:catalog`; TDD §13 names the same gates `check:pins` (CHK-09) and `check:catalog` (CHK-01). **This plan uses the TDD §13 names**, because CHK is the inventory every phase exit is measured against; the PRD naming is recorded as a defect for the SA in §14.
 
 ---
 
@@ -200,7 +200,7 @@ Tasks are ordered by **architectural dependency, not by convenience**. A task th
 
 | ID | Task | Artefact | Blocked by | Effort | Role | Acceptance |
 |---|---|---|---|---|---|---|
-| T-1001 | 27 ADRs drafted and cross-checked against `docs/references.md` | `docs/adr/*` | — | 3.0 | SA | every ADR cites ≥ 1 `R-xx`; no ADR cites a rejected URL |
+| T-1001 | every ADR drafted and cross-checked against `docs/references.md` | `docs/adr/*` | — | 3.0 | SA | every ADR cites ≥ 1 `R-xx`; no ADR cites a rejected URL |
 | T-1002 | `docs/getting-started.md` written by someone who did not build the stack | docs | T-907 | 2.0 | TL | a newcomer completes a local run with no clarification |
 | T-1003 | Generated `docs/ownership.md` accepted | docs | T-303 | 0.5 | TL | matches the catalogue |
 | T-1004 | Reference-catalogue re-verification sweep | `references.md` | — | 1.5 | SA | no URL 404s; vendor claims still marked as vendor claims |
@@ -245,7 +245,7 @@ No task is closed by "code reviewed and merged". A green pipeline is the only de
 
 ## 14. Audit record
 
-Version 1.0.0 of this plan was audited against `PRD-CMS-001`, `TDD-CMS-001`, `TEST-CMS-001`, `DEP-CMS-001`, `RACI-CMS-001` and the 27 records in `adr/`. This section is the record of what the audit changed and what it could not change here.
+Version 1.0.0 of this plan was audited against `PRD-CMS-001`, `TDD-CMS-001`, `TEST-CMS-001`, `DEP-CMS-001`, `RACI-CMS-001` and every record in `adr/`. This section is the record of what the audit changed and what it could not change here.
 
 ### 14.1 Defects found and corrected in this document
 
@@ -280,7 +280,7 @@ Version 1.0.0 of this plan was audited against `PRD-CMS-001`, `TDD-CMS-001`, `TE
 | Owner | Defect |
 |---|---|
 | **SA** | TDD §13 CHK-13 row cites "§14 GAP-13" while §14 assigns GAP-11 to ADR-0021 and GAP-13 to ADR-0023. The two tables disagree about which gap `check:authz-placement` closes. T-706 covers both until the TDD is corrected. |
-| **SA** | Gate naming: PRD uses `pins:check` and `catalog:verify-ownership`; TDD §13 uses `check:pins` and `check:catalog`; TEST-PLAN lists both spellings. One gate cannot have two commands. |
+| **SA** | Gate naming: PRD uses `check:pins` and `check:catalog`; TDD §13 uses `check:pins` and `check:catalog`; TEST-PLAN lists both spellings. One gate cannot have two commands. |
 | **SA** | TDD D-21…D-24 are unnumbered gaps in the D-series; BUD-01…BUD-04 absent and BUD-05 undefined. |
 | **SA** | PRD FR-01 is defined twice with different one-line titles (§1.4 and §14). |
 | **PM** | `IMPLEMENTATION-PLAN.md` §8 lists "adding a task inside a phase" as TL-approved and PM-informed. This audit added four tasks (T-109, T-310, T-614, plus CHK-22 into T-701) and corrected three phase effort figures. No calendar week moved. |

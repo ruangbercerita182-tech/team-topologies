@@ -3,9 +3,10 @@
 | Field | Value |
 |---|---|
 | Document ID | RACI-CMS-001 |
-| Version | 1.0.0 |
+| Version | 1.1.0 |
 | Status | Proposed |
 | Date | 2026-10-14 |
+| Accountable | **Project Manager** (assigned 2026-10-14; see §2.1) |
 | Governs | `docs/IMPLEMENTATION-PLAN.md`, `docs/TECHNICAL-IMPLEMENTATION-PLAN.md`, `docs/TEST-PLAN.md`, `docs/DEPLOYMENT-PLAN.md`, `docs/adr/` |
 | Basis | `docs/PRD.md` (G-01…G-10, DEC-01…DEC-24), `docs/TDD.md` (TDD-CMS-001) |
 
@@ -42,11 +43,26 @@ The single rule this document enforces: **one accountable name per artefact and 
 | **Overall Implementation Plan** | **Project Manager** | PM | TL, SA, DevOps, QA, PO | steering group | ✅ `IMPLEMENTATION-PLAN.md` |
 | **Test Plan** | **QA / Test Lead** | QA | TL, developers, SA | PM, PO | ✅ `TEST-PLAN.md` |
 | **Deployment / Cutover Plan** | **DevOps lead** (TL co-signs on app-ordering) | DevOps | TL, SA, developers | PM, QA | ✅ `DEPLOYMENT-PLAN.md` |
-| **Decision records (ADR)** | **Solution Architect** | SA | TL, affected team lead | all | ✅ `adr/` — 27 records, §5 |
+| **Decision records (ADR)** | **Solution Architect** | SA | TL, affected team lead | all | ✅ `adr/` — 29 records, §5 |
 | **Reference catalogue** | **Solution Architect** | SA | all | all | ✅ `docs/references.md` |
 | **Ownership ledger / catalogue schema** | **Platform team lead** | platform developers | SA | all | `catalog/` — produced in PH-2 |
 
 ---
+
+### 2.1 This document's own accountable, and why it needed saying
+
+Until v1.1.0 this table named no accountable for `RACI-CMS-001` itself, and §2 of the artefact
+index carried "—" for it. That is a deadlock rather than a neutral omission: the only artefact
+that could have assigned RACI an owner was the artefact that had none, so the gap could not be
+closed from inside the set.
+
+**Project Manager** is accountable, on two grounds already present in this document rather than
+invented for the occasion. §5 makes the PM the decider for scope and schedule trade-offs, which
+is what ownership boundaries ultimately are; and `IMPLEMENTATION-PLAN.md` §7 makes the PM the
+owner of the governance cadence this document describes. SA consulted.
+
+Assigning it does not weaken §2's own rule. Rule 1 below forbids *two* owners; it does not forbid
+naming the one owner of a document whose subject is coordination.
 
 ## 3. The one deviation, and why it is deliberate
 

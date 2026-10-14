@@ -12,7 +12,7 @@
 | Scope | Repository architecture, engineering standard, and tooling for a CMS product organisation built on Team Topologies |
 | Supersedes | PRD-CMS-001 v2.0.0 |
 | Evidence base | `docs/references.md` (REF-CMS-001 v3.1.0) — 405 admissible references, 79 rejected |
-| Decision records | `docs/adr/` (ADR-0001 … ADR-0028) |
+| Decision records | `docs/adr/` — the set and its index are generated; see [`adr/README.md`](adr/README.md). No count is asserted here: it changed on every record added, and each change was a chance to be wrong. |
 
 ### What changed from v2.0.0, and why
 
@@ -1204,7 +1204,7 @@ v3.1.0 is complete when all of the following are objectively true:
 4. Every RES-01 … RES-10 threshold is met and measured.
 5. Every AC-01 … AC-12 has a named mechanism present in the `check:*` scripts **and** a seeded violation proving it fails.
 6. `catalog:validate && catalog:generate && git diff --exit-code && turbo boundaries && dependency-cruiser && check:docs` exits zero on a clean tree.
-7. `docs/adr/0001`–`0028` exist and each cites at least one `R-xx` from `docs/references.md`.
+7. Every record in `docs/adr/` exists and each cites at least one `R-xx` from `docs/references.md`. The set's size and membership are read from [`adr/README.md`](adr/README.md), not restated here.
 8. No item in §2.2 (non-goals) has been implemented.
 9. `docs/references.md` contains no URL that 404s; §12.3's "honest limits" table is still accurate — any claim added since must have a measurement behind it.
 10. Every SPL-01 … SPL-05 trigger has been evaluated at least once, in writing, and the result recorded.

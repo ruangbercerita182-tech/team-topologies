@@ -3,7 +3,7 @@
 # ADR-0029 — Two records cited a rejected entry; the claims are true and the citations are withdrawn
 
 - **Status:** Accepted · **Date:** 2026-10-14 · **Decider:** Solution Architect · **Gate:** PH-7
-- **Amends:** ADR-0012, ADR-0017 (reference lists only — neither decision is reopened) · **Closes:** `adr/README.md` rule-2 violation found by `DOC-90`
+- **Amends:** ADR-0012, ADR-0017 — **both retired.** Reference lists corrected; neither decision is reopened · **Closes:** `adr/README.md` rule-2 violation found by `DOC-90`
 
 ## Context
 
@@ -22,7 +22,11 @@ R-BND-01, R-BND-04, R-BND-11, R-BND-12, R-BND-13
 
 Both records are accepted. `README.md` rule 4 forbids editing them, so this is the amendment path.
 
-**What this does and does not do.** It does not alter the two files: their reference lists still read as quoted above, because a rule that forbids editing accepted records also forbids editing them to remove an error in one. This record is therefore *normative* where they are *historical*. `DOC-90` continues to report both, the committed baseline carries them, and the gate stays green — the report is the visible trace, not an oversight. If the corpus ever adopts a rule that a superseding record may retire the file it supersedes, that rule should say so explicitly rather than being inferred from here.
+**Both records are retired.** Their status reads `Superseded by ADR-0029`, their reference lists drop `R-BND-11`, and the corrected lists are restated here as normative. Retirement is the amendment path rule 4 already provides; what was missing before was a rule saying a superseding record may retire the file it supersedes, and this version of `RACI-CMS-001` §2.1 and `README.md` §5 now say so.
+
+Until that was settled the two findings sat in the committed baseline and `DOC-90` reported them on every run, which is a report nobody reads after a week. A permanently-red check is worse than an absent one, because it is counted as coverage. The honest options were to retire the records or to declare the citations intentional; the catalogue forbids the latter, so the first was the only one available.
+
+**What retirement does not do.** It does not reopen either decision. ADR-0012 still gates a critical constraint on two mechanisms because `turbo boundaries` is Experimental; ADR-0017 still states which mechanism covers which class of violation. A reader who needs the decision reads this record's Summary, not the files.
 
 ## Decision
 
@@ -33,7 +37,10 @@ Both records are accepted. `README.md` rule 4 forbids editing them, so this is t
 
 `R-BND-07` (`@nx/enforce-module-boundaries`) is added to ADR-0017 as the contrast the catalogue prescribes: it is the mature tag-based boundary mechanism ADR-0012 treats as the primary one, and citing it makes the "Turborepo cannot express this class" row legible without asserting it about Turborepo from nothing.
 
-ADR-0012's corrected reference list becomes `R-BND-01, R-BND-02, R-BND-04, R-BND-12, R-BND-13, R-SOLID-10`.
+The corrected reference lists, which are now normative:
+
+- **ADR-0012** — `R-BND-01, R-BND-02, R-BND-04, R-BND-12, R-BND-13, R-SOLID-10`
+- **ADR-0017** — `R-BND-01, R-BND-04, R-BND-07, R-BND-12, R-BND-13` (R-BND-07 added, per the catalogue's own instruction to cite it by contrast)
 
 ## Consequences
 

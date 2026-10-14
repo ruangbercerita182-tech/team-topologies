@@ -169,8 +169,17 @@ def load_adrs(adr_dir: Path) -> list[Adr]:
 
 
 def render_adr_index(adrs: list[Adr]) -> str:
+    # Derived, not asserted. The phrase "none superseded" was hardcoded and
+    # became false the moment ADR-0029 retired two records -- a generated block
+    # claiming something the generator had not looked at.
+    live = [a for a in adrs if not a.fields.get("Status", "").lower().startswith("superseded")]
+    retired = len(adrs) - len(live)
+    if retired:
+        state = (f"{len(live)} accepted; {retired} superseded by a later record")
+    else:
+        state = f"{len(live)} accepted records; none superseded"
     lines = [
-        f"| Status of the set | {len(adrs)} accepted records; none superseded |",
+        f"| Status of the set | {state} |",
         "",
         "| ADR | Title | Gate | Addresses | Evidence |",
         "|---|---|---|---|---|",
@@ -211,6 +220,28 @@ def strip_generated(text: str) -> str:
     return GEN_MARKER.sub("", text)
 
 
+def _clean(v: str) -> str:
+    v = v.replace("**", "").replace("`", "").strip()
+    return re.sub(r"\s+", " ", v)
+
+
+def _header_block(text: str) -> dict[str, str]:
+    """The leading '| Field | Value |' block: id, version, status, owner."""
+    out: dict[str, str] = {}
+    seen = False
+    for line in text.splitlines():
+        if not line.startswith("|"):
+            if seen and line.strip():
+                break
+            continue
+        seen = True
+        cells = [_clean(c) for c in line.strip("|").split("|")]
+        if len(cells) < 2 or cells[0] == "Field" or set(cells[0]) <= set("-: "):
+            continue
+        out.setdefault(cells[0], cells[1])
+    return out
+
+
 def render_artefact_index(docs: Path, ids: list[str]) -> str:
     lines = ["| Artefact | ID | Version | Status | Accountable |", "|---|---|---|---|---|"]
     for want in ids:
@@ -225,9 +256,18 @@ def render_artefact_index(docs: Path, ids: list[str]) -> str:
             continue
         p, text = found
 
+        # Fields come from the leading "| Field | Value |" block only.
+        # Scanning the whole document made any table with an "Owner" column look
+        # like an owner declaration: a referrals table headed
+        # "# | Item | Owner | Closed by" was rendered with an accountable role
+        # of "Closed by".
+        head = _header_block(text)
+
         def fieldval(name: str) -> str:
-            m = re.search(rf"\|\s*{name}\s*\|\s*(.+?)\s*\|\s*$", text, re.M)
-            return m.group(1).strip() if m else "—"
+            v = head.get(name, "—")
+            # Drop the trailing citation, e.g. "(RACI-CMS-001 section 2)", so
+            # the column reads as a role rather than as a sentence.
+            return v.split("(")[0].strip().rstrip("*").strip() or "—"
 
         # The display label is the file stem: derived and unambiguous. The
         # previous hand-written table used prose labels ("Architecture
@@ -235,13 +275,33 @@ def render_artefact_index(docs: Path, ids: list[str]) -> str:
         # from file to meaning; the stem needs no upkeep.
         label = p.stem
         owner = fieldval("Accountable")
-        if not owner or owner == "—":
+        if owner == "—":
             owner = fieldval("Owner")
         lines.append(
             f"| {label} | `{want}` | {fieldval('Version')} | "
             f"{fieldval('Status')} | {owner} |"
         )
     return "\n".join(lines)
+
+
+def inside_section(text: str, name: str, heading: str) -> bool:
+    """Is the block for `name` under the heading it belongs to?
+
+    A block that drifts into the wrong section still has correct content, so a
+    content check passes and the artefact ends up rendered in a place nobody
+    reads. That is what happened: the artefact index sat under "Rules for this
+    directory" for several commits while gen_docs --check reported green.
+    """
+    hi = text.find(heading)
+    if hi == -1:
+        return False
+    rest = text[hi:]
+    nxt = re.search(r"^#{2,6} ", rest[1:], re.M)
+    section = rest[: nxt.start() + 1] if nxt else rest
+    # re.escape: the block name is a regex fragment, and a plain substring
+    # test with a trailing \b never matches, because \b is a word-boundary
+    # assertion and not a character that appears in the marker text.
+    return re.search(rf"<!-- BEGIN GENERATED: {re.escape(name)}\b", section) is not None
 
 
 def splice(text: str, name: str, owner: str, body: str) -> str:
@@ -287,26 +347,34 @@ def main(argv: list[str] | None = None) -> int:
         print("gen_docs: no ADR records found", file=sys.stderr)
         return 2
 
-    targets: list[tuple[Path, str, str, str]] = []
+    # (path, block name, owner, body, heading the block must sit under)
+    targets: list[tuple[Path, str, str, str, str]] = []
 
     idx = root / "adr" / "README.md"
-    targets.append((idx, "adr-index", "adr/[0-9][0-9][0-9][0-9]-*.md", render_adr_index(adrs)))
+    targets.append((idx, "adr-index", "adr/[0-9][0-9][0-9][0-9]-*.md",
+                    render_adr_index(adrs), "## Index"))
     targets.append((idx, "adr-traceability", "the header field of each ADR",
-                    render_traceability(adrs)))
+                    render_traceability(adrs), "## Traceability"))
 
     readme = root / "README.md"
     ids = ["DOC-INDEX-CMS-001", "PRD-CMS-001", "TDD-CMS-001", "IMP-CMS-001",
            "TIMP-CMS-001", "TEST-CMS-001", "DEP-CMS-001", "RACI-CMS-001",
            "REF-CMS-001", "REF-SA-CMS-001"]
     targets.append((readme, "artefact-index", "the | Field | Value | header of each artefact",
-                    render_artefact_index(root, ids)))
+                    render_artefact_index(root, ids), "## 2. Artefact index"))
 
     stale: list[str] = []
-    for path, name, owner, body in targets:
+    misplaced: list[str] = []
+    for path, name, owner, body, heading in targets:
         if not path.exists():
             stale.append(f"{path}: target missing")
             continue
         current = path.read_text(encoding="utf-8")
+        if not inside_section(current, name, heading):
+            misplaced.append(
+                f"{path}: block '{name}' is not under '{heading}' "
+                "(--check verifies content, not position)"
+            )
         updated = splice(current, name, owner, body)
         if updated == current:
             continue
@@ -314,10 +382,13 @@ def main(argv: list[str] | None = None) -> int:
         if not args.check:
             path.write_text(updated, encoding="utf-8")
 
+    if misplaced:
+        for m in misplaced:
+            print(f"gen_docs: misplaced: {m}", file=sys.stderr)
     if args.check:
-        if stale:
+        if stale or misplaced:
             print("gen_docs: generated blocks are not up to date:", file=sys.stderr)
-            for s in stale:
+            for s in stale + misplaced:
                 print(f"  {s}", file=sys.stderr)
             print("\nRun: python3 tools/docs/gen_docs.py", file=sys.stderr)
             return 1

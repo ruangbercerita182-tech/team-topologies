@@ -1,6 +1,6 @@
 # ADR-0017 — The boundary gate matrix: what each mechanism actually covers
 
-- **Status:** Accepted · **Date:** 2026-10-14 · **Decider:** Solution Architect · **Gate:** PH-7
+- **Status:** Superseded by ADR-0029 · **Date:** 2026-10-14 · **Decider:** Solution Architect · **Gate:** PH-7
 - **Refines:** ADR-0012 · **Closes:** TDD GAP-07 · **Design:** TDD §13.1
 
 ## Context
@@ -23,4 +23,4 @@ ADR-0012 mandates two mechanisms. This ADR fixes the **scope** of each, because 
 - **Write the missing rules into Turborepo config anyway** — rejected: unsupported keys silently do nothing.
 
 ## References
-R-BND-01, R-BND-04, R-BND-11, R-BND-12, R-BND-13
+R-BND-01, R-BND-04, R-BND-12, R-BND-13
