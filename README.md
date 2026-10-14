@@ -48,7 +48,7 @@ build breaks.
 | `check:pins` | FR-21 / D-11 — no floating reference in a build-affecting position |
 | `check:toolchain` | FR-26 / FR-27 / RES-01 — one package manager, one root lockfile, no nested `.git` |
 | `check:plans` | every phase entry and exit criterion is observable, i.e. is a command with an exit code |
-| fixtures | 60 cases proving each check can fail, and that correct input produces no finding |
+| fixtures | 80 cases proving each check can fail, that correct input produces no finding, and that our trailer parser agrees with `git interpret-trailers` |
 
 `check:pins` and `check:toolchain` currently report nothing, because the repository has no
 package manifests. That is a gate standing before there is anything to catch — not a

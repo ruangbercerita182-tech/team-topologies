@@ -49,7 +49,74 @@ import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 
-TRAILER = re.compile(r"^Owners-Override:\s*(?P<value>.+?)\s*$", re.I | re.M)
+# Git's own rule: a trailer is only a trailer if it sits in the trailing
+# paragraph of the message. Anything followed by prose is body text, and
+# `git interpret-trailers --parse` returns nothing for it.
+#
+# This is not pedantry. A message carrying "Owners-Override: web" mid-body
+# followed by a paragraph is invisible to `git log --format='%(trailers:...)'`,
+# so the override is granted on paper and absent from every post-merge audit.
+# A check that accepted it would be licensing exactly the thing FR-01 exists
+# to make auditable.
+TRAILER_LINE = re.compile(r"^(?P<key>[A-Za-z0-9][A-Za-z0-9-]*):(?:\s(?P<value>.*))?$")
+# Indentation is free-form: git accepts "  banner" as a continuation of the line
+# above. A single-character class matched only one leading space and silently
+# rejected every continuation indented by two or more.
+TRAILER_CONTINUATION = re.compile(r"^[ \t]+\S")
+GIT_MIN_TRAILER_RATIO = 0.25
+
+
+def parse_trailers(message: str) -> dict[str, list[str]]:
+    """Trailers as git would read them.
+
+    Derived by differential testing against `git interpret-trailers --parse`
+    rather than by reading git's documentation, which is where the first
+    version of this function went wrong. Five behaviours were observed and are
+    now reproduced:
+
+      * a key may not contain spaces -- "We agreed Owners-Override: web" is prose,
+        not a trailer, and git returns nothing for it;
+      * a paragraph containing any line that is neither a trailer nor an
+        indented continuation is not a trailer block at all, so a single line of
+        prose voids the whole block rather than diluting a ratio;
+      * indented continuation lines fold into the preceding value;
+      * the block must follow at least one other paragraph, so a message that is
+        nothing but a trailer line yields nothing;
+      * the key is matched case-sensitively -- git reports "owners-override" as
+        itself, and callers decide what to do about the case.
+    """
+    text = (message or "").rstrip()
+    if not text:
+        return {}
+    paragraphs = re.split(r"\n[ \t]*\n", text)
+    if len(paragraphs) < 2:
+        return {}
+    last = paragraphs[-1]
+    lines = [l for l in last.splitlines() if l.strip()]
+    if not lines:
+        return {}
+
+    parsed: list[tuple[str, str]] = []
+    for line in lines:
+        cont = TRAILER_CONTINUATION.match(line)
+        if cont:
+            if not parsed:
+                return {}
+            key, value = parsed[-1]
+            parsed[-1] = (key, f"{value} {line.strip()}".strip())
+            continue
+        m = TRAILER_LINE.match(line)
+        if not m:
+            return {}          # any non-trailer line voids the whole block
+        parsed.append((m.group("key"), (m.group("value") or "").strip()))
+
+    out: dict[str, list[str]] = {}
+    for key, value in parsed:
+        out.setdefault(key, []).append(value)
+    return out
+
+
+TRAILER = re.compile(r"^Owners-Override:\s*(?P<value>.+?)\s*$", re.I)
 TRAILER_COMMA = re.compile(r"[,\s]+")
 NON_AUTHOR_APPROVER = re.compile(r"^([A-Za-z0-9._\-]+)(?:\s*\(([^)]*)\))?$")
 
@@ -134,7 +201,13 @@ def evaluate(paths: list[str], approvers: list[str], author: str | None,
     else:
         d.non_owning = list(d.teams)
 
-    d.trailers = TRAILER.findall(message or "")
+    parsed = parse_trailers(message)
+    d.trailers = parsed.get("Owners-Override", []) or parsed.get("owners-override", [])
+    if TRAILER.search(message or "") and not d.trailers:
+        d.reasons.append(
+            "Owners-Override appears in the message but git does not read it as a trailer: "
+            "it is not in the trailing trailer block. `git interpret-trailers --parse` returns "
+            "nothing for this message, so the override would be invisible to any post-merge audit")
     if not d.non_owning:
         d.reasons.append(
             f"proposed by {author_team}, which owns every touched path; no override needed")
@@ -161,8 +234,9 @@ def evaluate(paths: list[str], approvers: list[str], author: str | None,
 
     named: set[str] = set()
     malformed = False
-    for t in d.trailers:
-        for raw in TRAILER_COMMA.split(t):
+    known = {s for s in catalog_slugs} | {"platform"}
+    for entry in d.trailers:
+        for raw in TRAILER_COMMA.split(entry):
             raw = raw.strip()
             if not raw:
                 continue
@@ -172,7 +246,13 @@ def evaluate(paths: list[str], approvers: list[str], author: str | None,
                 d.reasons.append(f"malformed Owners-Override entry: {raw!r}")
                 continue
             role = (m.group(2) or "").strip()
-            named.add(role if role else m.group(1))
+            who = role if role else m.group(1)
+            named.add(who)
+            if who not in known and not any(k.startswith(who) for k in known):
+                d.reasons.append(
+                    f"Owners-Override names {who!r}, which is not a declared team "
+                    f"({', '.join(sorted(known))}); a typo here grants nothing and hides the "
+                    "override from the audit that is its purpose")
 
     for team in d.non_owning:
         if team.removeprefix("team:") not in named and team not in named:

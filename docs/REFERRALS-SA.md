@@ -97,7 +97,7 @@ standalone scripts that do not depend on the workspace existing:
 |---|---|
 | T-105 | `check_toolchain` — one package manager (FR-27), one root lockfile (RES-01), no nested `.git` (FR-26) |
 | T-108 | `check_pins` — floating references rejected in build-affecting positions (FR-21, D-11) |
-| T-107 | `check_lsc` — FR-01 / AC-11. The rule branch-protection cannot express is implemented here and run in CI; the branch-protection **settings** (required reviewers, LSC trailer rule) are repository configuration and need an admin |
+| T-107 | `check_lsc` — FR-01 / AC-11, with the trailer parsed the way git parses it and validated by differential test against `git interpret-trailers`. The rule branch-protection cannot express is implemented here and run in CI; the branch-protection **settings** (required reviewers, LSC trailer rule) are repository configuration and need an admin |
 | — | `check_plans` — every phase criterion observable; PH-1's entry criterion was not |
 
 **T-101 … T-104, T-106 and T-109 are not done and cannot be.** They all assume a

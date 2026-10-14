@@ -33,6 +33,8 @@ GATES = [
      [sys.executable, str(CHECKS / "check_toolchain.py"), "-C", str(REPO)]),
     ("check harness fixtures",
      [sys.executable, str(CHECKS / "test_check_pins.py")]),
+    ("trailer parser agrees with git",
+     [sys.executable, str(CHECKS / "test_trailers.py")]),
     ("phase criteria observable",
      [sys.executable, str(CHECKS / "check_plans.py"), "-C", str(DOCS)]),
     ("generator up to date",

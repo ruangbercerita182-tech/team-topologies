@@ -68,6 +68,15 @@ LSC_CASES = [
     # owner set at every step.
     ("trailer on the merge commit only", TWO_TEAMS, ["ana", "bob"], None, None,
      "subject: x\n\nOwners-Override: banner, web\n", [], False),
+    # git does not read a trailer that is followed by prose, so neither do we:
+    # accepting one would grant an override no post-merge audit could find.
+    ("trailer followed by prose", TWO_TEAMS, ["ana", "bob"], None, None,
+     "Owners-Override: banner, web\n\nA paragraph after it.\n", [], True),
+    ("trailer mentioned only in prose", TWO_TEAMS, ["ana", "bob"], None, None,
+     "Subject: x\n\nWe agreed Owners-Override: banner, web is needed.\n", [], True),
+    # a typo grants nothing and must not pass silently
+    ("typo in an override team name", TWO_TEAMS, ["ana", "bob"], None, None,
+     "Subject: x\n\nOwners-Override: banner, wek\n", [], True),
 ]
 
 # (spec, expected floating) -- is_floating decides, not the file format

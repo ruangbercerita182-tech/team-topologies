@@ -127,3 +127,24 @@ python3 tools/checks/check_lsc.py -C . --merge-message-file "$(git log -1 --pret
 
 `--author-team` and `--team-approval` come from CI. An approver login cannot be
 mapped to a team inside the check, so it is passed in rather than guessed.
+
+### The trailer is only worth what git can find
+
+`check_lsc` parses trailers **the way git does**, not the way the word
+`Owners-Override:` appears in a message. A trailer followed by prose is body text to
+`git interpret-trailers --parse`, which means `git log --format='%(trailers:key=Owners-Override)'`
+reports nothing for it. Accepting such a message would grant an override on paper that
+**no post-merge audit could find** — the exact property FR-01 exists to provide.
+
+The parser was written by differential testing against git rather than from its
+documentation, and the first version disagreed with git on five of ten observed behaviours:
+keys may not contain spaces; one line of prose voids the whole block rather than diluting a
+ratio; indented continuations fold into the value; the block must follow another paragraph;
+and continuation indentation is free-form.
+
+`test_trailers.py` keeps that agreement honest across 16 cases. It **fails** when git is
+unavailable rather than skipping — a differential test that quietly stops testing is worse
+than no test.
+
+An `Owners-Override` naming a team that does not exist is rejected too. A typo there grants
+nothing and hides the override from the audit that is its purpose.
