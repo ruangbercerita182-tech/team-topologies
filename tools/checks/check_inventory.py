@@ -38,6 +38,7 @@ from __future__ import annotations
 import argparse
 import ast
 import json
+import subprocess
 import re
 import sys
 from dataclasses import dataclass
@@ -144,7 +145,48 @@ def executed_gates(run_all: Path) -> set[str]:
             if Path(s).name != "run_all.py" and not Path(s).name.startswith("test_")}
 
 
-def registry_ids(path: Path, name: str = "CHECKS") -> set[str] | None:
+GATE_SURFACE = ("tools", "docs")
+
+# Deliberately short. These are the only things inside the gate surface that no
+# gate can read, so they are the only things whose absence from git is harmless.
+# Widening this list silently disables INV-06, which is how a well-meaning
+# .gitignore entry turns a data file into a local-only file.
+NOT_GATE_INPUT = ("__pycache__/", ".pyc", ".pyo", ".DS_Store")
+
+
+def is_gate_input(path: str) -> bool:
+    return not any(path.endswith(sfx) or f"/{sfx}" in path for sfx in NOT_GATE_INPUT)
+
+
+def unaccounted_files(repo: Path) -> tuple[list[str], list[str]]:
+    """Files inside the gate surface that git does not track.
+
+    Ignored, and merely untracked, are both failures and for the same reason:
+    a gate reads a file that exists for whoever ran it last and is absent for
+    everyone else. The baseline bug was exactly this -- present on the author
+    machine, ignored in git, and therefore missing from every CI run. It was
+    found only because check_docs refuses to treat a missing baseline as an
+    empty one; refusing is the safety net, not the fix.
+
+    Returns (ignored, untracked). A non-repository yields ([], []).
+    """
+    def listed(*args: str) -> list[str]:
+        res = subprocess.run(
+            ["git", "-C", str(repo), "ls-files", "-z", *args],
+            capture_output=True, text=True)
+        if res.returncode != 0:
+            return []
+        return [p for p in res.stdout.split("\0") if p]
+
+    scope = ["--"] + [f"{d}/" for d in GATE_SURFACE]
+    ignored = [p for p in listed("--others", "--ignored", "--exclude-standard", *scope)
+               if is_gate_input(p)]
+    untracked = [p for p in listed("--others", "--exclude-standard", *scope)
+                 if is_gate_input(p)]
+    return sorted(ignored), sorted(untracked)
+
+
+def registry_ids(path: Path, name: str = "CHECKS") -> set[str]:
     """Ids a gate file actually registers, read from its AST.
 
     Text search is not enough and the failure is not hypothetical: `DOC-10`
@@ -299,6 +341,20 @@ def main(argv: list[str] | None = None) -> int:
             "INV-03", "tools/docs/fixtures/drift",
             f"fixture(s) exist that no suite asserts: {', '.join(orphan_fixtures)}. "
             "R-03: a check whose fixture is deleted fails review"))
+    # INV-06: nothing a gate reads may exist only on one machine.
+    ignored, untracked = unaccounted_files(repo)
+    if ignored or untracked:
+        if ignored:
+            findings.append(Finding(
+                "INV-06", repo.name,
+                f"git-ignored file(s) inside the gate surface: {', '.join(ignored)}. "
+                "A gate reads them locally and finds nothing in CI"))
+        if untracked:
+            findings.append(Finding(
+                "INV-06", repo.name,
+                f"untracked file(s) inside the gate surface: {', '.join(untracked)}. "
+                "Local runs pass on files CI cannot see"))
+
     # INV-05: every registered check must be named in section 13. The reverse
     # direction of INV-02, and the one that catches a check added without a row.
     for impl, declared in sorted(declared_by_file.items()):

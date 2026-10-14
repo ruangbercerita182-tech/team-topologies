@@ -9,4 +9,4 @@ __pycache__/
 # tools/docs/baseline.json is deliberately NOT ignored. It is not generated
 # output: it is the record of which findings were accepted, at which revision,
 # by whom. A tool output is regenerated; a decision is reviewed. Ignoring it
-# meant CI ran with no baseline, and the correct refusal was a hard exit 2.
+# meant CI ran with no baseline, and the correct refusal was a hard exit 2.tools/docs/*.secret

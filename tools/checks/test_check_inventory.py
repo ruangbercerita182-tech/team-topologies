@@ -18,6 +18,7 @@ from __future__ import annotations
 import shutil
 import subprocess
 import sys
+import subprocess
 import tempfile
 from pathlib import Path
 
@@ -78,7 +79,9 @@ def build(root: Path, *, tdd: str = TDD_OK,
           alpha: str = CHECK_ALPHA_OK, beta: str = CHECK_BETA_OK,
           suite: str = SUITE_OK, run_all: str = RUN_ALL_OK,
           drop_fixture: bool = False, drop_check: bool = False,
-          drop_suite_case: bool = False, drop_file: bool = False) -> Path:
+          drop_suite_case: bool = False, drop_file: bool = False,
+          gitignore: str | None = None,
+          fixture_name: str = "") -> Path:
     """Lay down a miniature repository that satisfies every rule."""
     docs = root / "docs"
     tools = root / "tools" / "docs"
@@ -101,6 +104,12 @@ def build(root: Path, *, tdd: str = TDD_OK,
         run_src = run_all.replace(
             '    ("beta", [sys.executable, str(CHECKS / "check_beta.py")]),\n', "")
 
+    # INV-06 reads the git index, so the fixture tree must be a real repository
+    # with its gate surface committed, exactly as CI sees one.
+    git(root, "init", "-q")
+    git(root, "config", "user.email", "fixture@example.invalid")
+    git(root, "config", "user.name", "fixture")
+
     (docs / "TDD.md").write_text(tdd, encoding="utf-8")
     (docs / "PRD.md").write_text("**FR-01 — single fact.**\n\n**FR-02 — no nesting.**\n",
                                  encoding="utf-8")
@@ -121,7 +130,31 @@ def build(root: Path, *, tdd: str = TDD_OK,
         d = fixtures / name
         d.mkdir(exist_ok=True)
         (d / "notes.md").write_text(f"fixture {name}\n", encoding="utf-8")
+
+    commit_all(root)
+    if gitignore:
+        (root / ".gitignore").write_text(gitignore, encoding="utf-8")
+        commit_all(root)
+    # Create the offending file AFTER the commit, so it's ignored/untracked
+    if fixture_name == "INV-06 ignored file in the gate surface":
+        (root / "tools" / "docs" / "local.json").write_text('{"findings":[]}\n', encoding="utf-8")
+    if fixture_name == "INV-06 untracked file in the gate surface":
+        (root / "tools" / "docs" / "untracked.txt").write_text("x\n", encoding="utf-8")
+    if fixture_name == "INV-06 bytecode is not a gate input":
+        pyc = root / "tools" / "checks" / "__pycache__" / "dummy.cpython-313.pyc"
+        pyc.parent.mkdir(parents=True, exist_ok=True)
+        pyc.write_bytes(b"\x00")
     return root
+
+
+def git(root: Path, *args: str) -> None:
+    subprocess.run(["git", "-C", str(root), *args],
+                   capture_output=True, text=True, check=False)
+
+
+def commit_all(root: Path) -> None:
+    git(root, "add", "-A")
+    git(root, "commit", "-q", "-m", "fixture baseline")
 
 
 def run(root: Path) -> tuple[int, str]:
@@ -149,6 +182,11 @@ CASES: list[tuple[str, int, str]] = [
      1, "which appears in no document"),
     ("R-03 check deleted with its fixture",
      1, "does not register it"),
+    ("INV-06 ignored file in the gate surface",
+     1, "git-ignored file(s) inside the gate surface"),
+    ("INV-06 untracked file in the gate surface",
+     1, "untracked file(s) inside the gate surface"),
+    ("INV-06 bytecode is not a gate input", 0, "every executed gate is declared"),
 ]
 
 
@@ -177,10 +215,16 @@ def main() -> int:
                     '    ("beta", [sys.executable, str(CHECKS / "check_beta.py")]),\n', "")}
             elif name == "INV-04 gate cites unknown requirement":
                 kw = {"tdd": TDD_OK.replace("FR-02", "FR-99")}
+            elif name == "INV-06 ignored file in the gate surface":
+                kw = {"gitignore": "tools/docs/local.json\n"}
+            elif name == "INV-06 untracked file in the gate surface":
+                kw = {}
+            elif name == "INV-06 bytecode is not a gate input":
+                kw = {}
             elif name.startswith("R-03"):
                 kw = {"drop_check": True, "drop_suite_case": True,
                       "drop_fixture": True}
-            build(root, **kw)
+            build(root, fixture_name=name, **kw)
             code, out = run(root)
 
         if code != want_code or want_text not in out:
