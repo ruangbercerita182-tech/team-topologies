@@ -625,6 +625,33 @@ spec:
   deprecationWindowReleases: 2
 ```
 
+kind: Interface
+metadata:
+  id: banner-api
+spec:
+  kind: api                       # api | event | ui
+  owner: banner                   # always the providing team
+  contract: ./teams/banner/contract/openapi.yaml
+  digest: sha256:…                # published; the consumer gate verifies against this, not a local copy (ADR-0020)
+```
+
+```yaml
+kind: Budget
+metadata:
+  id: BUD-07
+spec:
+  metric: sharedModuleDuplication
+  threshold: 0
+  scope: per-route
+  owner: each-context-team          # every entry names an owner; an unowned budget is not enforced (AC-13)
+  check: check:budgets
+  review: quarterly                 # a threshold change is an ADR, never a silent edit (PRD §15)
+```
+
+The v3.0.0 schema had no `Interface` kind, so provider/consumer roles had nowhere to attach — ADR-0007 makes the interface the unit of ownership, and the roles were being carried on the relation instead. `relations/` becomes derived: a `consumesApi` relation is not authored, it is computed from the two `Interface` declarations it names. One declaration of each fact.
+
+`Budget` is the kind that makes §12.2a enforceable. A threshold written in a PRD is a sentence; a threshold in `catalog/budgets.yaml` with an owner and a check is a gate. `spec.digest` is likewise load-bearing: the consumer's contract test verifies against the provider's **published** digest, so a consumer cannot be green against a schema the provider has already moved past (ADR-0020).
+
 The vocabulary is Backstage's (R-META-09) so the catalog can be loaded into a catalog without translation. One correction carried from R-META-09: **consume the relation, not `spec.owner`** — the owner may be derived from `CODEOWNERS` rather than authored in YAML. We therefore treat `relations` as the authoritative record and never hand-author `ownedBy` edges into a second place.
 
 ---
@@ -779,6 +806,19 @@ PERF-01 … PERF-05 measure the *output*. This subsection measures the *cost of 
 | PERF-13 | `remoteEntry.js` bundle inspection is a required CI step | Fails when it exceeds PERF-03 | `size-limit` (R-PERF-19), configured per R-PERF-10 / R-PERF-11. `size-limit` is cited because it measures **download-plus-execute time**, not bytes — upstream's stated reason: *"a much more accurate metric compared to the size in bytes"* |
 
 > **Bundler memory is a named measurement, not a cited fact.** R-BUILD-40 records that **no primary source exists** for an Rspack-vs-Vite memory comparison, and R-BUILD-41 confirms Vite's own docs contain no figures. Therefore **RES-07** does not assert a memory advantage. It mandates measuring `process.memoryUsage().rss` of the dev server against a fixed fixture, recorded per release, so the claim is made from our own data or not at all.
+
+### 12.2a Artefact-side budgets
+
+PERF-01 … PERF-13 measure one navigation. They say nothing about what the *artefact* costs: duplicated modules, unbounded remotes per route, repeated CSS, or slow mounting. The v3.0.0 text bounded none of these. **Stated in v3.1.0 by ADR-0019**, as metadata in `catalog/budgets.yaml` with a named owner and a blocking gate per entry — a threshold in prose is not a budget, because nothing refuses to build when it is exceeded (ADR-0022).
+
+| ID | Budget | Threshold | Owner | Why |
+|---|---|---|---|---|
+| BUD-06 | Aggregate JS emitted for one route across all remotes | ≤ 2× the PERF-02 route budget, and ≤ **3** remotes per route | Platform | Artefact, build and CDN cost, unmeasured before |
+| BUD-07 | Shared-module duplication count per route | **0** | each context's own team | A semver mismatch silently bundles a private copy of React, and every test still passes |
+| BUD-08 | CSS transferred per route | ≤ **1** design-system stylesheet | Platform | Federation does not isolate CSS; each remote re-sending it is a regression nobody can attribute |
+| BUD-09 | Remote mount p95, measured in the field | ≤ **250 ms** after navigation commit | Platform | Core Web Vitals do not attribute a regression to a named remote, so the budget has to |
+
+BUD-07 is the only one set to zero, and the reason is that its failure is silent: everything renders, every test is green, and two Reacts are now in the page. That is the failure mode PERF-05 exists to prevent, and a non-zero threshold would permit the exact case PERF-05 forbids.
 
 ### 12.3 Honest limits of this section
 
@@ -960,6 +1000,8 @@ An AC with no executable mechanism is a wish.
 | AC-10 | No nested Git repository | filesystem check (FR-26) | `check:repo-shape` |
 | AC-11 | Cross-team change only via LSC | branch protection + `Owners-Override` trailer check | `check:lsc` |
 | AC-12 | Authorisation only in bounded contexts, per request | `spec.authorises: every-request` is a literal; aggregator client-side role checks prohibited by lint | `check:authz-placement` |
+| AC-13 | Artefact-side budgets BUD-06 … BUD-09 (§12.2a) | every entry in `catalog/budgets.yaml` names an owner and a blocking check; `check:budgets` reads the YAML and fails with the entry id | `check:budgets` |
+| AC-14 | A budget threshold is never asserted in prose | the threshold appears in `catalog/budgets.yaml`; §12.2a states it for reading only | `check:budgets` + quarterly budget review |
 
 **AC-01 is enforced twice on purpose.** `turbo boundaries` is labelled **Experimental** (R-BND-01). Relying on an experimental feature as the single gate for a critical constraint is an unacceptable single point of failure (DEC-14, RISK-11).
 

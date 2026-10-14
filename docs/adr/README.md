@@ -113,9 +113,13 @@ change to this section, not to the generated one.
 **Applied in PRD v3.1.0:** PR-2 (MF-4 split into MF-4a…MF-4d, PERF-03 reachability stated),
 PR-5 (`.envrc` pinned `source_url` form), PR-8 (DEC-25), PR-9 (§18 prerequisite-gating, the closed
 overlap set and the two hard exclusions), PR-7 (`route.dataStrategy`, FR-13),
-PR-4 (§7.2 ordering, ALG-4 invariants O-1/O-2), plus §21 items 11–13 and the gate naming unification.
-**Not yet applied:** PR-3, PR-6. Each is listed below with its source ADR; none is
-disputed and none is blocked.
+PR-4 (§7.2 ordering, ALG-4 invariants O-1/O-2),
+PR-6 (§12.2a BUD-06…BUD-09 with owners and gates; AC-13, AC-14), plus §21 items 11–13 and the gate naming unification.
+PR-3 (§8.2 `Interface` and `Budget` kinds, `relations/` derived) completes the set.
+
+**All nine applied in PRD v3.1.0.** Each is listed below with its source ADR. None was
+disputed; the only reason any was outstanding is that a version bump was taken first and the
+body amendments then followed, so that each edit could be verified against a working gate.
 
 PR-9 was the sharpest of the nine. §18 still said *"a phase starts only when the previous
 phase's exit criterion objectively holds"* while ADR-0027 had already replaced it — so the
